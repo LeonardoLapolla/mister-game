@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  nickname    String
+  league      String
+  budget      Int
+  budgetSpent Int      @default(0)
+  formation   String
+  players     Player[]
+  matches     Match[]
+  finalScore  Int?
+  finished    Boolean  @default(false)
+  calendarData String?
+}
+
+model Player {
+  id        String  @id @default(uuid())
+  name      String
+  position  String
+  rating    Int
+  cost      Int
+  sessionId String
+  session   Session @relation(fields: [sessionId], references: [id])
+}
+
+model Match {
+  id           String  @id @default(uuid())
+  opponent     String
+  homeGame     Boolean
+  goalsFor     Int     @default(0)
+  goalsAgainst Int     @default(0)
+  narrative    String
+  played       Boolean @default(false)
+  matchday     Int     @default(0)
+  sessionId    String
+  session      Session @relation(fields: [sessionId], references: [id])
+}
+
+model LeaderboardEntry {
+  id        String   @id @default(uuid())
+  nickname  String
+  score     Int
+  league    String
+  budget    Int
+  position  Int
+  createdAt DateTime @default(now())
+}
