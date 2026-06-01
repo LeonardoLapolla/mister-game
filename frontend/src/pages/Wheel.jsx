@@ -28,8 +28,8 @@ const POSITION_ORDER = ['GK', 'DEF', 'MID', 'ATT']
 const POSITION_LABELS = { GK: 'Portieri', DEF: 'Difensori', MID: 'Centrocampisti', ATT: 'Attaccanti' }
 
 const BUDGET_FILTERS = {
-  100: (p) => true,
-  50: (p) => p.rating <= 84,
+  100: (p) => p.rating >= 78,
+  50: (p) => p.rating >= 75 && p.rating <= 84,
   30: (p) => p.rating <= 78,
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
 const POSITION_COLORS = {
@@ -7,14 +7,6 @@ const POSITION_COLORS = {
   DEF: { bg: 'bg-blue-500', text: 'text-blue-900', border: 'border-blue-400' },
   MID: { bg: 'bg-green-500', text: 'text-green-900', border: 'border-green-400' },
   ATT: { bg: 'bg-red-500', text: 'text-red-900', border: 'border-red-400' },
-}
-
-const FORMATION_ROWS = {
-  '4-3-3': ['ATT', 'ATT', 'ATT', 'MID', 'MID', 'MID', 'DEF', 'DEF', 'DEF', 'DEF', 'GK'],
-  '4-4-2': ['ATT', 'ATT', 'MID', 'MID', 'MID', 'MID', 'DEF', 'DEF', 'DEF', 'DEF', 'GK'],
-  '3-5-2': ['ATT', 'ATT', 'MID', 'MID', 'MID', 'MID', 'MID', 'DEF', 'DEF', 'DEF', 'GK'],
-  '5-3-2': ['ATT', 'ATT', 'MID', 'MID', 'MID', 'DEF', 'DEF', 'DEF', 'DEF', 'DEF', 'GK'],
-  '4-2-3-1': ['ATT', 'MID', 'MID', 'MID', 'MID', 'MID', 'DEF', 'DEF', 'DEF', 'DEF', 'GK'],
 }
 
 const FORMATION_LAYOUT = {
@@ -66,10 +58,14 @@ function PlayerDot({ player }) {
 
 export default function Squad() {
   const { sessionId } = useParams()
+  const [searchParams] = useSearchParams()
+  const isAutoMode = searchParams.get('mode') === 'auto'
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [simulating, setSimulating] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,6 +83,24 @@ export default function Squad() {
     fetchData()
   }, [sessionId])
 
+  const handleStart = async () => {
+    if (isAutoMode) {
+      setSimulating(true)
+      setError(null)
+      try {
+        const res = await fetch(`/api/match/${sessionId}/generate-second-leg`, { method: 'POST' })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+      } catch (err) {
+        setError(err.message)
+        setSimulating(false)
+        return
+      }
+      setSimulating(false)
+    }
+    navigate(`/season/${sessionId}`)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -101,7 +115,6 @@ export default function Squad() {
     ? Math.round(players.reduce((s, p) => s + p.rating, 0) / players.length)
     : 0
 
-  // Assegna giocatori per riga
   const playersByPosition = {}
   for (const pos of ['GK', 'DEF', 'MID', 'ATT']) {
     playersByPosition[pos] = players.filter(p => p.position === pos)
@@ -111,16 +124,17 @@ export default function Squad() {
     <div className="min-h-screen bg-gray-950 px-4 py-8">
       <div className="max-w-lg mx-auto">
 
-        {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-black text-white">{session?.nickname}</h1>
           <p className="text-gray-500 mt-1">
             {session?.league} · {formation} · Overall medio{' '}
             <span className="text-green-400 font-bold">{avgRating}</span>
           </p>
+          {isAutoMode && (
+            <p className="text-yellow-400 text-sm mt-2">⚡ Modalità simulazione — il ritorno verrà simulato automaticamente</p>
+          )}
         </div>
 
-        {/* Campo */}
         <div
           className="relative rounded-2xl overflow-hidden mb-6"
           style={{
@@ -128,7 +142,6 @@ export default function Squad() {
             minHeight: '480px',
           }}
         >
-          {/* Linee campo */}
           <div className="absolute inset-0 flex flex-col justify-between py-4 px-2 pointer-events-none">
             <div className="border-b border-white/20 w-1/2 mx-auto" />
             <div className="border border-white/20 w-1/3 mx-auto h-16 rounded-b-lg" />
@@ -137,7 +150,6 @@ export default function Squad() {
           <div className="absolute top-1/2 left-0 right-0 border-t border-white/20 pointer-events-none" />
           <div className="absolute top-4 left-1/2 -translate-x-1/2 border border-white/20 w-1/3 h-16 rounded-t-lg pointer-events-none" />
 
-          {/* Giocatori */}
           <div className="relative z-10 flex flex-col justify-around h-full py-6 px-2" style={{ minHeight: '480px' }}>
             {layout.map((row, rowIdx) => (
               <div key={rowIdx} className="flex justify-around items-center">
@@ -149,7 +161,6 @@ export default function Squad() {
           </div>
         </div>
 
-        {/* Lista giocatori */}
         <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6">
           <div className="grid grid-cols-2 gap-2">
             {['GK', 'DEF', 'MID', 'ATT'].map(pos => (
@@ -169,11 +180,18 @@ export default function Squad() {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
         <button
-          onClick={() => navigate(`/season/${sessionId}`)}
-          className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
+          onClick={handleStart}
+          disabled={simulating}
+          className="w-full bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
         >
-          INIZIA LA STAGIONE →
+          {simulating ? 'Simulazione ritorno...' : isAutoMode ? 'SIMULA IL RITORNO →' : 'INIZIA LA STAGIONE →'}
         </button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
 const LEAGUES = [
@@ -152,6 +152,8 @@ function SpinWheel({ items, onResult, resetKey }) {
 
 export default function Transfer() {
   const { sessionId } = useParams()
+  const [searchParams] = useSearchParams()
+  const isAutoMode = searchParams.get('mode') === 'auto'
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
 
@@ -182,7 +184,6 @@ export default function Transfer() {
     fetchData()
   }, [sessionId])
 
-  // Quando wheelItems cambia e c'è uno step pendente, avanza
   useEffect(() => {
     if (pendingSigningStep && wheelItems.length > 0) {
       setSigningStep(pendingSigningStep)
@@ -209,12 +210,17 @@ export default function Transfer() {
     }
   }
 
+  const navigateAfterTransfer = () => {
+    const dest = `/squad/${sessionId}${isAutoMode ? '?mode=auto' : ''}`
+    setTimeout(() => navigate(dest), 500)
+  }
+
   const getWheelItems = () => {
     if (step === 'yesno') return [
-    { label: 'SI! 🛒', value: true, color: '#22c55e' },
-    { label: 'NO ❌', value: false, color: '#ef4444' },
-    { label: 'SI! 🛒', value: true, color: '#16a34a' },
-    { label: 'NO ❌', value: false, color: '#ef4444' },
+      { label: 'SI! 🛒', value: true, color: '#22c55e' },
+      { label: 'NO ❌', value: false, color: '#ef4444' },
+      { label: 'SI! 🛒', value: true, color: '#16a34a' },
+      { label: 'NO ❌', value: false, color: '#ef4444' },
     ]
     if (step === 'budget') return BUDGET_OPTIONS.map(b => ({ ...b, label: b.label }))
     if (step === 'count') return [
@@ -253,7 +259,6 @@ export default function Transfer() {
         setSigningLeague(item)
       } else if (signingStep === 'role') {
         setSigningRole(item)
-        // Prepara giocatori e metti step pendente
         const leaguePlayers = allPlayers[signingLeague?.code] || []
         const myNames = myPlayers.map(p => p.name)
         const available = leaguePlayers
@@ -263,10 +268,9 @@ export default function Transfer() {
           .slice(0, 20)
         setWheelItems(available.map(p => ({ ...p, label: p.name })))
         setPendingSigningStep('player')
-        return // non mostrare il bottone avanti, l'useEffect ci pensa
+        return
       } else if (signingStep === 'player') {
         setNewPlayer(item)
-        // Prepara giocatori da rimpiazzare
         const myInRole = myPlayers.filter(p => p.position === item.position)
         setWheelItems(myInRole.map(p => ({ ...p, label: p.name })))
         setPendingSigningStep('replace')
@@ -280,7 +284,7 @@ export default function Transfer() {
   const goNext = async () => {
     if (step === 'yesno') {
       if (!doTransfer) {
-        navigate(`/squad/${sessionId}`)
+        navigateAfterTransfer()
       } else {
         setStep('budget')
         setResult(null)
@@ -330,9 +334,9 @@ export default function Transfer() {
 
       const nextSigning = currentSigning + 1
 
-        if (nextSigning >= signingCount) {
-            setTimeout(() => navigate(`/squad/${sessionId}`), 500)
-        } else {
+      if (nextSigning >= signingCount) {
+        navigateAfterTransfer()
+      } else {
         setCurrentSigning(nextSigning)
         setSigningStep('league')
         setSigningLeague(null)
@@ -388,13 +392,11 @@ export default function Transfer() {
     return null
   }
 
-  // Mostra bottone avanti solo quando non c'è uno step pendente
   const showNext = result && !pendingSigningStep
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-lg">
-
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🏪</div>
           <h1 className="text-3xl font-black text-white">Calciomercato</h1>

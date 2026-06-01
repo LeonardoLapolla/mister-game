@@ -26,15 +26,16 @@ router.get("/:sessionId", async (req, res) => {
     }
 
 const leaguePlayers = playersData[session.league] || [];
-console.log("League:", session.league, "Giocatori totali:", leaguePlayers.length)
 const boughtIds = session.players.map((p) => p.name);
-const budgetFilters = { 100: 99, 50: 84, 30: 78 }
-const maxRating = budgetFilters[session.budget] || 99
+const budgetFilters = {
+  100: (p) => p.rating >= 78,
+  50: (p) => p.rating >= 75 && p.rating <= 84,
+  30: (p) => p.rating <= 78,
+}
+const maxRating = budgetFilters[session.budget] || (() => true)
 const available = leaguePlayers
   .filter((p) => !boughtIds.includes(p.name))
-  .filter((p) => p.rating <= maxRating)
-console.log("Disponibili:", available.length)
-
+  .filter((p) => maxRating(p))
     res.json({ players: available, session });
   } catch (error) {
     console.error(error);

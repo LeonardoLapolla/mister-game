@@ -52,8 +52,8 @@ function simulateRound(roundMatches) {
   return roundMatches.map(m => {
     const diff = m.homeStrength - m.awayStrength + 3;
     const absDiff = Math.abs(diff);
-    const drawChance = Math.max(0.10, 0.28 - absDiff * 0.008);
-    const homeWinChance = Math.min(0.75, Math.max(0.15, 0.5 + diff * 0.015));
+    const drawChance = Math.max(0.08, 0.22 - absDiff * 0.006);
+    const homeWinChance = Math.min(0.80, Math.max(0.08, 0.5 + diff * 0.025));
 
     const r = Math.random();
     let homeGoals, awayGoals;
@@ -140,8 +140,8 @@ function simulateSeason(yourPlayers, leagueTeams) {
     const opponentStrength = m.homeGame ? m.strength : m.strength + 3;
     const diff = yourStrength - opponentStrength;
     const absDiff = Math.abs(diff);
-    const drawChance = Math.max(0.10, 0.28 - absDiff * 0.008);
-    const winChance = Math.min(0.75, Math.max(0.15, 0.5 + diff * 0.015));
+    const drawChance = Math.max(0.08, 0.22 - absDiff * 0.006);
+    const winChance = Math.min(0.80, Math.max(0.08, 0.5 + diff * 0.025));
 
     const r = Math.random();
     let goalsFor, goalsAgainst;
