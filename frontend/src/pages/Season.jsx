@@ -443,10 +443,12 @@ export default function Season() {
   const activeDraw = Math.min(80, Math.max(5, baseProbs.draw + (activeEvent?.draw || 0)))
   const activeLoss = Math.min(80, Math.max(5, baseProbs.loss + (activeEvent?.loss || 0)))
   const totalAdj = activeWin + activeDraw + activeLoss
+  const winR = Math.round(activeWin / totalAdj * 100)
+  const drawR = Math.round(activeDraw / totalAdj * 100)
   const adjProbs = {
-    win: Math.round(activeWin / totalAdj * 100),
-    draw: Math.round(activeDraw / totalAdj * 100),
-    loss: Math.round(activeLoss / totalAdj * 100),
+    win: winR,
+    draw: drawR,
+    loss: 100 - winR - drawR,
   }
 
   // Items ruota evento
@@ -597,7 +599,7 @@ export default function Season() {
             }`}>
               <div className="text-5xl mb-3">{activeEvent.emoji}</div>
               <div className="text-white font-black text-xl mb-2">
-                {activeEvent.type === 'bonus' ? '⬆️ EVENTO POSITIVO!' : '⬇️ EVENTO NEGATIVO!'}
+                {activeEvent.type === 'bonus' ? '⬆️ BONUS!' : '⬇️ MALUS!'}
               </div>
               <div className="text-white/90 text-lg">{activeEvent.text}</div>
               <div className="text-white/60 text-sm mt-2">Dura per 4 partite</div>
