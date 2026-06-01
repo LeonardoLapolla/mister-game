@@ -5,9 +5,9 @@ import useGameStore from '../store/gameStore'
 const EVENTS = [
   { id: 'hot_striker', emoji: '🔥', text: 'Il tuo bomber è in forma smagliante!', type: 'bonus', win: +7, draw: 0, loss: 0 },
   { id: 'great_training', emoji: '💪', text: 'Settimana di allenamento perfetta, squadra al massimo!', type: 'bonus', win: +5, draw: 0, loss: -3 },
-  { id: 'opponent_crisis', emoji: '😤', text: "L'avversario viene da una serie negativa, morale a terra", type: 'bonus', win: +6, draw: -3, loss: 0 },
-  { id: 'keeper_injured', emoji: '🤕', text: 'Il tuo portiere è infortunato, gioca la riserva', type: 'malus', win: 0, draw: 0, loss: +7 },
-  { id: 'heavy_pitch', emoji: '🌧️', text: 'Campo pesante per la pioggia, gioco bloccato', type: 'malus', win: -5, draw: +6, loss: 0 },
+  { id: 'opponent_crisis', emoji: '🤩', text: "Grande espressione del gioco, giocate a memoria!", type: 'bonus', win: +6, draw: -3, loss: 0 },
+  { id: 'keeper_injured', emoji: '🤕', text: 'Grave infortunio, gioca la riserva', type: 'malus', win: 0, draw: 0, loss: +7 },
+  { id: 'heavy_pitch', emoji: '😤', text: 'Difficoltà a segnare', type: 'malus', win: -5, draw: +6, loss: 0 },
   { id: 'dressing_room', emoji: '😰', text: 'Tensione nello spogliatoio, clima pesante', type: 'malus', win: -6, draw: 0, loss: +5 },
 ]
 
