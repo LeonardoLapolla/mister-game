@@ -128,10 +128,10 @@ export default function Results() {
         </div>
 
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(`/end-season/${sessionId}?position=${data.position}&points=${data.finalScore}&wins=${data.standings.find(s => s.name === 'La Tua Squadra')?.w || 0}&draws=${data.standings.find(s => s.name === 'La Tua Squadra')?.d || 0}&losses=${data.standings.find(s => s.name === 'La Tua Squadra')?.l || 0}&gf=${data.standings.find(s => s.name === 'La Tua Squadra')?.gf || 0}&ga=${data.standings.find(s => s.name === 'La Tua Squadra')?.ga || 0}`)}
           className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
         >
-          GIOCA ANCORA →
+          CONTINUA →
         </button>
       </div>
     </div>

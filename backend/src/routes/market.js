@@ -29,6 +29,7 @@ const leaguePlayers = playersData[session.league] || [];
 const boughtIds = session.players.map((p) => p.name);
 const budgetFilters = {
   100: (p) => p.rating >= 78,
+  80: (p) => p.rating >= 76 && p.rating <= 86,
   50: (p) => p.rating >= 75 && p.rating <= 84,
   30: (p) => p.rating <= 78,
 }

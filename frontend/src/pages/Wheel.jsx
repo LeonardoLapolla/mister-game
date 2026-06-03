@@ -5,6 +5,7 @@ import useGameStore from '../store/gameStore'
 const BUDGETS = [
   { value: 30, label: '30M', color: '#ef4444', description: 'Massimo punteggio' },
   { value: 50, label: '50M', color: '#f59e0b', description: 'Equilibrato' },
+  { value: 80, label: '80M', color: '#3b82f6', description: 'Sfidante' },
   { value: 100, label: '100M', color: '#22c55e', description: 'Punteggio base' },
 ]
 
@@ -29,6 +30,7 @@ const POSITION_LABELS = { GK: 'Portieri', DEF: 'Difensori', MID: 'Centrocampisti
 
 const BUDGET_FILTERS = {
   100: (p) => p.rating >= 78,
+  80: (p) => p.rating >= 76 && p.rating <= 86,
   50: (p) => p.rating >= 75 && p.rating <= 84,
   30: (p) => p.rating <= 78,
 }

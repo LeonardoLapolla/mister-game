@@ -20,6 +20,23 @@ model Session {
   finalScore  Int?
   finished    Boolean  @default(false)
   calendarData String?
+  seasonNumber  Int      @default(1)
+  history       SeasonHistory[]
+}
+
+model SeasonHistory {
+  id           String   @id @default(uuid())
+  seasonNumber Int
+  position     Int
+  points       Int
+  wins         Int
+  draws        Int
+  losses       Int
+  goalsFor     Int
+  goalsAgainst Int
+  createdAt    DateTime @default(now())
+  sessionId    String
+  session      Session  @relation(fields: [sessionId], references: [id])
 }
 
 model Player {

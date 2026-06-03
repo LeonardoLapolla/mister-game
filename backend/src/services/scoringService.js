@@ -8,8 +8,9 @@ function calculateFinalScore(position, totalTeams, budget, leagueMultiplier) {
   const budgetMultipliers = {
     30: 2.0,
     50: 1.5,
+    80: 1.2,
     100: 1.0,
-  };
+  }
   const budgetMultiplier = budgetMultipliers[budget] || 1.0;
 
   // Bonus posizione speciale

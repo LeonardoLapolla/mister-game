@@ -5,6 +5,8 @@ import Season from './pages/Season'
 import Results from './pages/Results'
 import Squad from './pages/Squad'
 import Transfer from './pages/Transfer'
+import EndSeason from './pages/EndSeason'
+
 
 
 export default function App() {
@@ -17,6 +19,7 @@ export default function App() {
         <Route path="/results/:sessionId" element={<Results />} />
         <Route path="/squad/:sessionId" element={<Squad />} />
         <Route path="/transfer/:sessionId" element={<Transfer />} />
+        <Route path="/end-season/:sessionId" element={<EndSeason />} />
       </Routes>
     </div>
   )
