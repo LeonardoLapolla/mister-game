@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import { IconSlot, IconMoney, IconClipboard, IconBall } from '../components/Icons'
 
 const BUDGETS = [
   { value: 30, label: '30M', color: '#ef4444', description: 'Massimo punteggio' },
@@ -141,21 +142,25 @@ function SpinWheel({ items, onResult, locked, onLock }) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-10">
-          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent border-r-white drop-shadow-lg" />
+      <div className={`relative rounded-full p-1 ${spinning ? 'animate-pulse-glow' : ''}`}
+        style={{ border: '1px solid rgba(0,230,118,0.25)' }}>
+        <div className="absolute top-1/2 -right-5 -translate-y-1/2 z-10">
+          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent drop-shadow-lg"
+            style={{ borderRightColor: 'var(--c-green)' }} />
         </div>
-        <canvas ref={canvasRef} width={320} height={320} className="rounded-full shadow-2xl shadow-green-500/10" />
+        <canvas ref={canvasRef} width={320} height={320} className="rounded-full"
+          style={{ boxShadow: '0 0 40px rgba(0,230,118,0.1)' }} />
       </div>
       <button
         onClick={spin}
         disabled={spinning || locked || items.length === 0}
-        className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95 disabled:scale-100"
+        className="btn-primary text-lg px-10 py-3 disabled:opacity-40"
+        style={{ fontWeight: 800 }}
       >
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA! 🎰'}
+        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
       </button>
-      <p className="text-gray-600 text-xs">
-        premi <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">spazio</kbd> per girare
+      <p className="text-xs" style={{ color: 'var(--c-faint)' }}>
+        premi <kbd className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--c-surface2)', color: 'var(--c-muted)' }}>spazio</kbd> per girare
       </p>
     </div>
   )
@@ -316,13 +321,22 @@ export default function Wheel() {
   const currentPositionSlots = slots[currentPosition] || 0
   const currentPositionCount = squad.filter(p => p.position === currentPosition).length
 
+  const posBadgeStyle = (pos) => {
+    if (pos === 'GK') return { bg: 'rgba(255,171,0,0.15)', color: 'var(--c-amber)' }
+    if (pos === 'DEF') return { bg: 'rgba(68,138,255,0.15)', color: 'var(--c-blue)' }
+    if (pos === 'MID') return { bg: 'rgba(0,230,118,0.15)', color: 'var(--c-green)' }
+    return { bg: 'rgba(255,61,87,0.15)', color: 'var(--c-red)' }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8" style={{ background: 'var(--c-bg)' }}>
       <div className="w-full max-w-lg">
 
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black text-white tracking-tight">🎰 MISTER</h1>
-          <p className="text-gray-500 mt-2">
+          <h1 className="section-title flex items-center justify-center gap-3" style={{ fontSize: 'clamp(2.5rem,10vw,4rem)' }}>
+            <IconSlot size={36} style={{ color: 'var(--c-green)' }} /> MISTER
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--c-muted)' }}>
             {step === 'league' && 'Gira per un campionato casuale o scegli tu'}
             {step === 'budget' && 'Gira per scoprire il tuo budget'}
             {step === 'formation' && 'Gira per ottenere il modulo'}
@@ -334,11 +348,12 @@ export default function Wheel() {
         {/* Risultato corrente */}
         {result && step !== 'players' && (
           <div className="text-center mb-6">
-            <div className="inline-block bg-green-500/10 border border-green-500/30 rounded-2xl px-6 py-3">
-              <div className="text-2xl font-black text-green-400">
+            <div className="inline-block rounded-2xl px-6 py-3"
+              style={{ background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.25)' }}>
+              <div className="flex items-center gap-2 text-2xl font-black" style={{ color: 'var(--c-green)' }}>
                 {step === 'league' && `${result.country} ${result.name}`}
-                {step === 'budget' && `💰 ${result.label} — ${result.description}`}
-                {step === 'formation' && `📋 ${result.id}`}
+                {step === 'budget' && <><IconMoney size={22} />{result.label} — {result.description}</>}
+                {step === 'formation' && <><IconClipboard size={22} />{result.id}</>}
               </div>
             </div>
           </div>
@@ -346,16 +361,16 @@ export default function Wheel() {
 
         {result && step === 'players' && (
           <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-            <div className="bg-green-500/95 border border-green-400 rounded-2xl p-8 text-center shadow-2xl">
-              <div className="text-2xl mb-1">⚽</div>
-              <div className="text-white font-black text-2xl mb-1">{result.name}</div>
-              <div className="text-white/80 text-lg">OVR {result.rating} · {result.cost}M</div>
-              <div className={`text-xs font-bold mt-2 px-2 py-1 rounded inline-block ${
-                result.position === 'GK' ? 'bg-yellow-500/30 text-yellow-200' :
-                result.position === 'DEF' ? 'bg-blue-500/30 text-blue-200' :
-                result.position === 'MID' ? 'bg-purple-500/30 text-purple-200' :
-                'bg-red-500/30 text-red-200'
-              }`}>{result.position}</div>
+            <div className="rounded-2xl p-8 text-center shadow-2xl"
+              style={{ background: 'rgba(0,230,118,0.95)', border: '1px solid var(--c-green)' }}>
+              <div className="flex justify-center mb-1"><IconBall size={32} /></div>
+              <div className="font-black text-2xl mb-1 text-black">{result.name}</div>
+              <div className="text-black/80 text-lg" style={{ fontFamily: 'DM Mono, monospace' }}>
+                OVR {result.rating} · {result.cost}M
+              </div>
+              <div className="text-xs font-bold mt-2 px-2 py-1 rounded inline-block text-black/70">
+                {result.position}
+              </div>
             </div>
           </div>
         )}
@@ -363,11 +378,11 @@ export default function Wheel() {
         {/* Step nickname */}
         {step === 'nickname' && (
           <div className="flex flex-col items-center gap-4">
-            <div className="w-full bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <div className="text-center mb-4 text-gray-400 text-sm">
-                <span className="text-white font-bold">{league?.country} {league?.name}</span> ·{' '}
-                <span className="text-yellow-400 font-bold">{budget?.label}</span> ·{' '}
-                <span className="text-blue-400 font-bold">{formation?.id}</span>
+            <div className="card-base w-full p-6">
+              <div className="text-center mb-4 text-sm" style={{ color: 'var(--c-muted)' }}>
+                <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{league?.country} {league?.name}</span> ·{' '}
+                <span style={{ color: 'var(--c-amber)', fontWeight: 600 }}>{budget?.label}</span> ·{' '}
+                <span style={{ color: 'var(--c-blue)', fontWeight: 600 }}>{formation?.id}</span>
               </div>
               <input
                 type="text"
@@ -375,17 +390,25 @@ export default function Wheel() {
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder="Nome squadra..."
                 maxLength={20}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-green-500 transition-colors text-center text-xl font-bold"
+                className="w-full rounded-xl px-4 py-3 text-center text-xl font-bold transition-colors focus:outline-none"
+                style={{
+                  background: 'var(--c-surface2)',
+                  border: '1px solid var(--c-border)',
+                  color: 'var(--c-text)',
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'var(--c-green)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--c-border)'}
                 onKeyDown={(e) => e.key === 'Enter' && nickname.trim() && createSession()}
               />
             </div>
-            {error && <div className="text-red-400 text-sm">{error}</div>}
+            {error && <div className="text-sm" style={{ color: 'var(--c-red)' }}>{error}</div>}
             <button
               onClick={createSession}
               disabled={!nickname.trim() || loading}
-              className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95"
+              className="btn-primary text-lg px-10 py-3 disabled:opacity-40"
+              style={{ fontWeight: 800 }}
             >
-              {loading ? 'Caricamento...' : 'INIZIA A GIRARE! ⚽'}
+              {loading ? 'Caricamento...' : <><IconBall size={18} /> INIZIA A GIRARE!</>}
             </button>
           </div>
         )}
@@ -408,16 +431,17 @@ export default function Wheel() {
             {/* Scelta manuale campionato */}
             {step === 'league' && !locked && (
               <div className="w-full">
-                <p className="text-gray-600 text-xs text-center mb-3">oppure scegli tu</p>
+                <p className="text-xs text-center mb-3" style={{ color: 'var(--c-faint)' }}>oppure scegli tu</p>
                 <div className="grid grid-cols-5 gap-2">
                   {LEAGUES.map(l => (
                     <button
                       key={l.code}
                       onClick={() => handleManualLeague(l)}
-                      className="bg-gray-900 hover:bg-gray-800 border border-gray-700 hover:border-green-500 rounded-xl p-2 text-center transition-all"
+                      className="card-base card-glow-green p-2 text-center transition-all"
+                      style={{ cursor: 'pointer' }}
                     >
                       <div className="text-xl">{l.country}</div>
-                      <div className="text-gray-400 text-xs mt-1">{l.code}</div>
+                      <div className="text-xs mt-1" style={{ color: 'var(--c-muted)' }}>{l.code}</div>
                     </button>
                   ))}
                 </div>
@@ -426,32 +450,27 @@ export default function Wheel() {
 
             {/* Rosa accumulata */}
             {step === 'players' && squad.length > 0 && (
-              <div className="w-full bg-gray-900 rounded-2xl p-4 border border-gray-800">
-                <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+              <div className="card-base w-full p-4">
+                <div className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--c-muted)' }}>
                   Rosa ({squad.length}/{Object.values(slots).reduce((a, b) => a + b, 0)})
                 </div>
-                <div className="grid grid-cols-2 gap-1">
-                  {squad.map((p, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                        p.position === 'GK' ? 'bg-yellow-500/20 text-yellow-400' :
-                        p.position === 'DEF' ? 'bg-blue-500/20 text-blue-400' :
-                        p.position === 'MID' ? 'bg-purple-500/20 text-purple-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>{p.position}</span>
-                      <span className="text-white truncate">{p.name}</span>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {squad.map((p, i) => {
+                    const s = posBadgeStyle(p.position)
+                    return (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: s.bg, color: s.color }}>{p.position}</span>
+                        <span className="truncate" style={{ color: 'var(--c-text)' }}>{p.name}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
 
             {/* Bottone avanti */}
             {result && step !== 'players' && (
-              <button
-                onClick={nextStep}
-                className="bg-white hover:bg-gray-100 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95"
-              >
+              <button onClick={nextStep} className="btn-ghost text-lg px-10 py-3" style={{ fontWeight: 700 }}>
                 AVANTI →
               </button>
             )}
@@ -459,7 +478,9 @@ export default function Wheel() {
         )}
 
         {loading && step === 'players' && (
-          <div className="text-center text-gray-400 mt-4">Salvataggio rosa in corso...</div>
+          <div className="text-center mt-4 text-sm animate-pulse" style={{ color: 'var(--c-muted)' }}>
+            Salvataggio rosa in corso...
+          </div>
         )}
       </div>
     </div>

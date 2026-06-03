@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import { IconStore } from '../components/Icons'
 
 const LEAGUES = [
   { code: 'PL', name: 'Premier League', country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
@@ -130,21 +131,25 @@ function SpinWheel({ items, onResult, resetKey }) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-10">
-          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent border-r-white drop-shadow-lg" />
+      <div className={`relative rounded-full p-1 ${spinning ? 'animate-pulse-glow' : ''}`}
+        style={{ border: '1px solid rgba(0,230,118,0.25)' }}>
+        <div className="absolute top-1/2 -right-5 -translate-y-1/2 z-10">
+          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent drop-shadow-lg"
+            style={{ borderRightColor: 'var(--c-green)' }} />
         </div>
-        <canvas ref={canvasRef} width={300} height={300} className="rounded-full shadow-2xl shadow-green-500/10" />
+        <canvas ref={canvasRef} width={300} height={300} className="rounded-full"
+          style={{ boxShadow: '0 0 40px rgba(0,230,118,0.1)' }} />
       </div>
       <button
         onClick={spin}
         disabled={spinning || locked || items.length === 0}
-        className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95 disabled:scale-100"
+        className="btn-primary text-lg px-10 py-3 disabled:opacity-40"
+        style={{ fontWeight: 800 }}
       >
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA! 🎰'}
+        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
       </button>
-      <p className="text-gray-600 text-xs">
-        premi <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">spazio</kbd> per girare
+      <p className="text-xs" style={{ color: 'var(--c-faint)' }}>
+        premi <kbd className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--c-surface2)', color: 'var(--c-muted)' }}>spazio</kbd> per girare
       </p>
     </div>
   )
@@ -217,10 +222,10 @@ export default function Transfer() {
 
   const getWheelItems = () => {
     if (step === 'yesno') return [
-      { label: 'SI! 🛒', value: true, color: '#22c55e' },
-      { label: 'NO ❌', value: false, color: '#ef4444' },
-      { label: 'SI! 🛒', value: true, color: '#16a34a' },
-      { label: 'NO ❌', value: false, color: '#ef4444' },
+      { label: 'SI!', value: true, color: '#22c55e' },
+      { label: 'NO', value: false, color: '#ef4444' },
+      { label: 'SI!', value: true, color: '#16a34a' },
+      { label: 'NO', value: false, color: '#ef4444' },
     ]
     if (step === 'budget') return BUDGET_OPTIONS.map(b => ({ ...b, label: b.label }))
     if (step === 'count') return [
@@ -356,8 +361,8 @@ export default function Transfer() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-gray-400 text-xl">Caricamento...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
+        <div className="text-xl animate-pulse" style={{ color: 'var(--c-muted)' }}>Caricamento...</div>
       </div>
     )
   }
@@ -380,14 +385,14 @@ export default function Transfer() {
 
   const getResultLabel = () => {
     if (!result) return null
-    if (step === 'yesno') return result.value ? '🛒 SI, facciamo mercato!' : '❌ No, si va avanti così'
-    if (step === 'budget') return `💰 ${result.label} a disposizione`
-    if (step === 'count') return `🔄 ${result.value} acquist${result.value === 1 ? 'o' : 'i'}`
+    if (step === 'yesno') return result.value ? 'SI, facciamo mercato!' : 'No, si va avanti così'
+    if (step === 'budget') return `${result.label} a disposizione`
+    if (step === 'count') return `${result.value} acquist${result.value === 1 ? 'o' : 'i'}`
     if (step === 'signing') {
       if (signingStep === 'league') return `${result.country} ${result.name}`
-      if (signingStep === 'role') return `📋 ${result.label}`
-      if (signingStep === 'player') return `✅ ${result.name} (OVR ${result.rating})`
-      if (signingStep === 'replace') return `🔄 Fuori ${result.name}`
+      if (signingStep === 'role') return result.label
+      if (signingStep === 'player') return `${result.name} (OVR ${result.rating})`
+      if (signingStep === 'replace') return `Fuori: ${result.name}`
     }
     return null
   }
@@ -395,24 +400,26 @@ export default function Transfer() {
   const showNext = result && !pendingSigningStep
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8" style={{ background: 'var(--c-bg)' }}>
       <div className="w-full max-w-lg">
+
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">🏪</div>
-          <h1 className="text-3xl font-black text-white">Calciomercato</h1>
-          <p className="text-gray-500 mt-1">{getStepTitle()}</p>
+          <div className="flex justify-center mb-2" style={{ color: 'var(--c-green)' }}><IconStore size={48} /></div>
+          <h1 className="section-title" style={{ fontSize: '2.5rem' }}>Calciomercato</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--c-muted)' }}>{getStepTitle()}</p>
         </div>
 
         {completedSignings.length > 0 && (
-          <div className="w-full bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6">
-            <div className="text-gray-400 text-xs uppercase tracking-wider mb-2">Acquisti effettuati</div>
+          <div className="card-base w-full p-4 mb-6">
+            <div className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--c-muted)' }}>Acquisti effettuati</div>
             {completedSignings.map((s, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm py-1">
-                <span className="text-green-400 font-bold">IN</span>
-                <span className="text-white">{s.in.name}</span>
-                <span className="text-gray-600 mx-1">↔</span>
-                <span className="text-red-400 font-bold">OUT</span>
-                <span className="text-gray-400">{s.out.name}</span>
+              <div key={i} className="flex items-center gap-2 text-sm py-1.5"
+                style={{ borderBottom: i < completedSignings.length - 1 ? '1px solid var(--c-border)' : 'none' }}>
+                <span className="badge-win">IN</span>
+                <span style={{ color: 'var(--c-text)' }}>{s.in.name}</span>
+                <span className="mx-1" style={{ color: 'var(--c-faint)' }}>↔</span>
+                <span className="badge-loss">OUT</span>
+                <span style={{ color: 'var(--c-muted)' }}>{s.out.name}</span>
               </div>
             ))}
           </div>
@@ -420,10 +427,13 @@ export default function Transfer() {
 
         {result && !pendingSigningStep && (
           <div className="text-center mb-6">
-            <div className="inline-block bg-green-500/10 border border-green-500/30 rounded-2xl px-6 py-3">
-              <div className="text-xl font-black text-green-400">{getResultLabel()}</div>
+            <div className="inline-block rounded-2xl px-6 py-3"
+              style={{ background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.25)' }}>
+              <div className="text-xl font-black" style={{ color: 'var(--c-green)' }}>{getResultLabel()}</div>
               {step === 'signing' && signingStep === 'player' && result.cost && (
-                <div className="text-gray-400 text-sm mt-1">Costo: {result.cost}M</div>
+                <div className="text-sm mt-1" style={{ fontFamily: 'DM Mono, monospace', color: 'var(--c-muted)' }}>
+                  Costo: {result.cost}M
+                </div>
               )}
             </div>
           </div>
@@ -431,7 +441,7 @@ export default function Transfer() {
 
         {pendingSigningStep && (
           <div className="text-center mb-6">
-            <div className="text-gray-500 text-sm">Preparazione ruota...</div>
+            <div className="text-sm" style={{ color: 'var(--c-muted)' }}>Preparazione ruota...</div>
           </div>
         )}
 
@@ -446,7 +456,8 @@ export default function Transfer() {
             <button
               onClick={goNext}
               disabled={saving}
-              className="bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95"
+              className="btn-ghost text-lg px-10 py-3 disabled:opacity-40"
+              style={{ fontWeight: 700 }}
             >
               {saving ? 'Salvataggio...' :
                step === 'signing' && signingStep === 'replace' ? 'CONFERMA ACQUISTO ✓' : 'AVANTI →'}

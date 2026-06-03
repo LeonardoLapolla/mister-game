@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import { IconTrophy, IconSkull, IconFlag, IconSun, IconCalendar, IconUsers, IconChart } from '../components/Icons'
 
 const LEAGUES = [
   { code: 'PL', name: 'Premier League', country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
@@ -135,21 +136,25 @@ function SpinWheel({ items, onResult, resetKey }) {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-10">
-          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent border-r-white drop-shadow-lg" />
+      <div className={`relative rounded-full p-1 ${spinning ? 'animate-pulse-glow' : ''}`}
+        style={{ border: '1px solid rgba(0,230,118,0.25)' }}>
+        <div className="absolute top-1/2 -right-5 -translate-y-1/2 z-10">
+          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent drop-shadow-lg"
+            style={{ borderRightColor: 'var(--c-green)' }} />
         </div>
-        <canvas ref={canvasRef} width={300} height={300} className="rounded-full shadow-2xl shadow-green-500/10" />
+        <canvas ref={canvasRef} width={300} height={300} className="rounded-full"
+          style={{ boxShadow: '0 0 40px rgba(0,230,118,0.1)' }} />
       </div>
       <button
         onClick={spin}
         disabled={spinning || locked || items.length === 0}
-        className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95 disabled:scale-100"
+        className="btn-primary text-lg px-10 py-3 disabled:opacity-40"
+        style={{ fontWeight: 800 }}
       >
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA! 🎰'}
+        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
       </button>
-      <p className="text-gray-600 text-xs">
-        premi <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">spazio</kbd> per girare
+      <p className="text-xs" style={{ color: 'var(--c-faint)' }}>
+        premi <kbd className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'var(--c-surface2)', color: 'var(--c-muted)' }}>spazio</kbd> per girare
       </p>
     </div>
   )
@@ -382,88 +387,108 @@ export default function EndSeason() {
 
   const getResultLabel = () => {
     if (!result) return null
-    if (phase === 'budget') return `💰 ${result.label} a disposizione`
-    if (phase === 'count') return `🔄 ${result.value} acquisti`
+    if (phase === 'budget') return `${result.label} a disposizione`
+    if (phase === 'count') return `${result.value} acquisti`
     if (phase === 'signing') {
       if (signingStep === 'league') return `${result.country} ${result.name}`
-      if (signingStep === 'role') return `📋 ${result.label}`
-      if (signingStep === 'player') return `✅ ${result.name} (OVR ${result.rating})`
-      if (signingStep === 'replace') return `🔄 Fuori ${result.name}`
+      if (signingStep === 'role') return result.label
+      if (signingStep === 'player') return `${result.name} (OVR ${result.rating})`
+      if (signingStep === 'replace') return `Fuori: ${result.name}`
     }
     return null
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-gray-400 text-xl">Caricamento...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
+        <div className="text-xl animate-pulse" style={{ color: 'var(--c-muted)' }}>Caricamento...</div>
       </div>
     )
   }
 
   const seasonNumber = data?.seasonNumber || 1
 
+  const positionBadge = (h) => {
+    if (h.position <= 4) return { bg: 'rgba(68,138,255,0.15)', color: 'var(--c-blue)' }
+    if (h.position <= 6) return { bg: 'rgba(0,230,118,0.15)', color: 'var(--c-green)' }
+    if (h.position >= totalTeams - 2) return { bg: 'rgba(255,61,87,0.15)', color: 'var(--c-red)' }
+    return { bg: 'var(--c-surface2)', color: 'var(--c-muted)' }
+  }
+
+  const posStyle = (p) => {
+    if (p.position === 'GK') return { bg: 'rgba(255,171,0,0.12)', color: 'var(--c-amber)' }
+    if (p.position === 'DEF') return { bg: 'rgba(68,138,255,0.12)', color: 'var(--c-blue)' }
+    if (p.position === 'MID') return { bg: 'rgba(0,230,118,0.12)', color: 'var(--c-green)' }
+    return { bg: 'rgba(255,61,87,0.12)', color: 'var(--c-red)' }
+  }
+
   // Riepilogo finale
   if (phase === 'relegated' || phase === 'done') {
+    const isRelegate = phase === 'relegated'
     return (
-      <div className="min-h-screen bg-gray-950 px-4 py-8">
+      <div className="min-h-screen px-4 py-8" style={{ background: 'var(--c-bg)' }}>
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-4">{phase === 'relegated' ? '💀' : '🏆'}</div>
-            <h1 className="text-4xl font-black text-white mb-2">
-              {phase === 'relegated' ? 'Retrocesso!' : `${MAX_SEASONS} Stagioni completate!`}
+          <div className="text-center mb-8 animate-flash-result">
+            <div className="flex justify-center mb-4" style={{
+              color: isRelegate ? 'var(--c-red)' : 'var(--c-green)',
+              filter: isRelegate ? 'drop-shadow(0 0 20px rgba(255,61,87,0.4))' : 'drop-shadow(0 0 20px rgba(0,230,118,0.4))',
+            }}>
+              {isRelegate ? <IconSkull size={72} /> : <IconTrophy size={72} />}
+            </div>
+            <h1 className="section-title mb-2" style={{
+              fontSize: 'clamp(2rem,8vw,3.5rem)',
+              color: isRelegate ? 'var(--c-red)' : 'var(--c-green)',
+              textShadow: isRelegate ? '0 0 40px rgba(255,61,87,0.4)' : '0 0 40px rgba(0,230,118,0.4)',
+            }}>
+              {isRelegate ? 'Retrocesso!' : `${MAX_SEASONS} Stagioni!`}
             </h1>
-            <p className="text-gray-500">
-              {phase === 'relegated' ? 'La tua avventura finisce qui.' : 'Hai completato tutte le stagioni!'}
+            <p style={{ color: 'var(--c-muted)' }}>
+              {isRelegate ? 'La tua avventura finisce qui.' : 'Hai completato tutte le stagioni!'}
             </p>
           </div>
 
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6">
-            <h2 className="text-lg font-black text-white mb-4">📊 Riepilogo stagioni</h2>
+          <div className="card-base p-5 mb-5">
+            <h2 className="section-title text-xl mb-4 flex items-center gap-2"><IconChart size={20} /> Riepilogo stagioni</h2>
             <div className="space-y-2">
-              {history.map((h) => (
-                <div key={h.seasonNumber} className="flex items-center justify-between px-3 py-2 bg-gray-800 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-400 text-sm font-bold">Stagione {h.seasonNumber}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded font-bold ${
-                      h.position <= 4 ? 'bg-blue-500/20 text-blue-400' :
-                      h.position <= 6 ? 'bg-green-500/20 text-green-400' :
-                      h.position >= totalTeams - 2 ? 'bg-red-500/20 text-red-400' :
-                      'bg-gray-700 text-gray-400'
-                    }`}>{h.position}°</span>
+              {history.map((h) => {
+                const badge = positionBadge(h)
+                return (
+                  <div key={h.seasonNumber} className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                    style={{ background: 'var(--c-surface2)' }}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold" style={{ color: 'var(--c-muted)' }}>Stagione {h.seasonNumber}</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: badge.bg, color: badge.color }}>{h.position}°</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs" style={{ fontFamily: 'DM Mono, monospace', color: 'var(--c-muted)' }}>
+                      <span>{h.wins}V {h.draws}P {h.losses}S</span>
+                      <span>{h.goalsFor}:{h.goalsAgainst}</span>
+                      <span className="font-bold" style={{ color: 'var(--c-text)' }}>{h.points} pt</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span>{h.wins}V {h.draws}P {h.losses}S</span>
-                    <span>{h.goalsFor}:{h.goalsAgainst}</span>
-                    <span className="text-white font-black">{h.points} pt</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6">
-            <h2 className="text-lg font-black text-white mb-4">👥 Rosa finale</h2>
-            <div className="grid grid-cols-2 gap-1">
+          <div className="card-base p-5 mb-5">
+            <h2 className="section-title text-xl mb-4 flex items-center gap-2"><IconUsers size={20} /> Rosa finale</h2>
+            <div className="grid grid-cols-2 gap-1.5">
               {['GK', 'DEF', 'MID', 'ATT'].map(pos =>
-                players.filter(p => p.position === pos).map((p, i) => (
-                  <div key={i} className="flex items-center gap-2 py-1">
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                      pos === 'GK' ? 'bg-yellow-500/20 text-yellow-400' :
-                      pos === 'DEF' ? 'bg-blue-500/20 text-blue-400' :
-                      pos === 'MID' ? 'bg-green-500/20 text-green-400' :
-                      'bg-red-500/20 text-red-400'
-                    }`}>{pos}</span>
-                    <span className="text-white text-sm truncate">{p.name}</span>
-                    <span className="text-gray-500 text-xs ml-auto">{p.rating}</span>
-                  </div>
-                ))
+                players.filter(p => p.position === pos).map((p, i) => {
+                  const s = posStyle(p)
+                  return (
+                    <div key={i} className="flex items-center gap-2 py-1">
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: s.bg, color: s.color }}>{pos}</span>
+                      <span className="text-sm truncate" style={{ color: 'var(--c-text)' }}>{p.name}</span>
+                      <span className="text-xs ml-auto" style={{ fontFamily: 'DM Mono, monospace', color: 'var(--c-muted)' }}>{p.rating}</span>
+                    </div>
+                  )
+                })
               )}
             </div>
           </div>
 
-          <button onClick={() => navigate('/')}
-            className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95">
+          <button onClick={() => navigate('/')} className="btn-primary w-full py-4 text-xl animate-pulse-glow" style={{ fontWeight: 800 }}>
             GIOCA ANCORA →
           </button>
         </div>
@@ -474,55 +499,58 @@ export default function EndSeason() {
   // Recap fine stagione
   if (phase === 'recap') {
     return (
-      <div className="min-h-screen bg-gray-950 px-4 py-8">
+      <div className="min-h-screen px-4 py-8" style={{ background: 'var(--c-bg)' }}>
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-3">{seasonNumber < MAX_SEASONS ? '📅' : '🏁'}</div>
-            <h1 className="text-3xl font-black text-white">Fine stagione {seasonNumber}</h1>
-            <p className="text-gray-500 mt-1">Stagione {seasonNumber} di {MAX_SEASONS}</p>
+          <div className="text-center mb-8 animate-fade-up">
+            <div className="flex justify-center mb-3" style={{ color: 'var(--c-muted)' }}>
+              {seasonNumber < MAX_SEASONS ? <IconCalendar size={56} /> : <IconFlag size={56} />}
+            </div>
+            <h1 className="section-title" style={{ fontSize: 'clamp(2rem,8vw,3rem)' }}>Fine stagione {seasonNumber}</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--c-muted)' }}>Stagione {seasonNumber} di {MAX_SEASONS}</p>
           </div>
 
           {history.length > 0 && (
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-4">
-              <h2 className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">Stagioni precedenti</h2>
+            <div className="card-base p-5 mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--c-muted)' }}>Stagioni precedenti</h2>
               <div className="space-y-2">
-                {history.map((h) => (
-                  <div key={h.seasonNumber} className="flex items-center justify-between px-3 py-2 bg-gray-800 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-400 text-sm font-bold">Stagione {h.seasonNumber}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded font-bold ${
-                        h.position <= 4 ? 'bg-blue-500/20 text-blue-400' :
-                        h.position <= 6 ? 'bg-green-500/20 text-green-400' :
-                        h.position >= totalTeams - 2 ? 'bg-red-500/20 text-red-400' :
-                        'bg-gray-700 text-gray-400'
-                      }`}>{h.position}°</span>
+                {history.map((h) => {
+                  const badge = positionBadge(h)
+                  return (
+                    <div key={h.seasonNumber} className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                      style={{ background: 'var(--c-surface2)' }}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--c-muted)' }}>Stagione {h.seasonNumber}</span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: badge.bg, color: badge.color }}>{h.position}°</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs" style={{ fontFamily: 'DM Mono, monospace', color: 'var(--c-muted)' }}>
+                        <span>{h.wins}V {h.draws}P {h.losses}S</span>
+                        <span className="font-bold" style={{ color: 'var(--c-text)' }}>{h.points} pt</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-gray-400">
-                      <span>{h.wins}V {h.draws}P {h.losses}S</span>
-                      <span className="text-white font-black">{h.points} pt</span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
 
           {isRelegated ? (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center mb-6">
-              <div className="text-4xl mb-2">💀</div>
-              <div className="text-red-400 font-black text-xl">Retrocesso!</div>
-              <div className="text-gray-400 text-sm mt-1">La tua avventura finisce qui.</div>
+            <div className="rounded-2xl p-6 text-center mb-6 animate-flash-result"
+              style={{ background: 'rgba(255,61,87,0.08)', border: '1px solid rgba(255,61,87,0.3)' }}>
+              <div className="flex justify-center mb-2" style={{ color: 'var(--c-red)' }}><IconSkull size={48} /></div>
+              <div className="font-black text-xl" style={{ color: 'var(--c-red)' }}>Retrocesso!</div>
+              <div className="text-sm mt-1" style={{ color: 'var(--c-muted)' }}>La tua avventura finisce qui.</div>
             </div>
           ) : seasonNumber >= MAX_SEASONS ? (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-6 text-center mb-6">
-              <div className="text-4xl mb-2">🏁</div>
-              <div className="text-green-400 font-black text-xl">Ultima stagione completata!</div>
+            <div className="rounded-2xl p-6 text-center mb-6 animate-flash-result"
+              style={{ background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.3)' }}>
+              <div className="flex justify-center mb-2" style={{ color: 'var(--c-green)' }}><IconFlag size={48} /></div>
+              <div className="font-black text-xl" style={{ color: 'var(--c-green)' }}>Ultima stagione completata!</div>
             </div>
           ) : (
-            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6 text-center">
-              <div className="text-gray-400 text-sm">Prossima stagione</div>
-              <div className="text-white font-black text-2xl">Stagione {seasonNumber + 1}</div>
-              <div className="text-gray-500 text-sm mt-1">Mercato estivo disponibile</div>
+            <div className="card-base p-5 mb-6 text-center">
+              <div className="text-sm" style={{ color: 'var(--c-muted)' }}>Prossima stagione</div>
+              <div className="section-title text-3xl mt-1">Stagione {seasonNumber + 1}</div>
+              <div className="text-sm mt-1" style={{ color: 'var(--c-muted)' }}>Mercato estivo disponibile</div>
             </div>
           )}
 
@@ -534,7 +562,7 @@ export default function EndSeason() {
                 handleNextSeason()
               }
             }}
-            className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
+            className="btn-primary w-full py-4 text-xl" style={{ fontWeight: 800 }}
           >
             {isRelegated || seasonNumber >= MAX_SEASONS ? 'VEDI RIEPILOGO →' : 'INIZIA MERCATO ESTIVO →'}
           </button>
@@ -546,25 +574,25 @@ export default function EndSeason() {
   const showNext = result && !pendingStep
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8" style={{ background: 'var(--c-bg)' }}>
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">🌞</div>
-          <h1 className="text-3xl font-black text-white">Mercato Estivo</h1>
-          <p className="text-gray-500 mt-1">{getStepTitle()}</p>
-          <p className="text-gray-600 text-xs mt-1">Stagione {seasonNumber + 1} di {MAX_SEASONS}</p>
+          <div className="flex justify-center mb-2" style={{ color: 'var(--c-amber)' }}><IconSun size={48} /></div>
+          <h1 className="section-title" style={{ fontSize: '2.5rem' }}>Mercato Estivo</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--c-muted)' }}>{getStepTitle()}</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--c-faint)' }}>Stagione {seasonNumber + 1} di {MAX_SEASONS}</p>
         </div>
 
         {completedSignings.length > 0 && (
-          <div className="w-full bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6">
-            <div className="text-gray-400 text-xs uppercase tracking-wider mb-2">Acquisti effettuati</div>
+          <div className="card-base p-4 mb-6">
+            <div className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--c-muted)' }}>Acquisti effettuati</div>
             {completedSignings.map((s, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm py-1">
-                <span className="text-green-400 font-bold">IN</span>
-                <span className="text-white">{s.in.name}</span>
-                <span className="text-gray-600 mx-1">↔</span>
-                <span className="text-red-400 font-bold">OUT</span>
-                <span className="text-gray-400">{s.out.name}</span>
+              <div key={i} className="flex items-center gap-2 text-sm py-1.5" style={{ borderBottom: i < completedSignings.length - 1 ? '1px solid var(--c-border)' : 'none' }}>
+                <span className="badge-win">IN</span>
+                <span style={{ color: 'var(--c-text)' }}>{s.in.name}</span>
+                <span className="mx-1" style={{ color: 'var(--c-faint)' }}>↔</span>
+                <span className="badge-loss">OUT</span>
+                <span style={{ color: 'var(--c-muted)' }}>{s.out.name}</span>
               </div>
             ))}
           </div>
@@ -572,15 +600,16 @@ export default function EndSeason() {
 
         {result && !pendingStep && (
           <div className="text-center mb-6">
-            <div className="inline-block bg-green-500/10 border border-green-500/30 rounded-2xl px-6 py-3">
-              <div className="text-xl font-black text-green-400">{getResultLabel()}</div>
+            <div className="inline-block rounded-2xl px-6 py-3"
+              style={{ background: 'rgba(0,230,118,0.08)', border: '1px solid rgba(0,230,118,0.25)' }}>
+              <div className="text-xl font-black" style={{ color: 'var(--c-green)' }}>{getResultLabel()}</div>
             </div>
           </div>
         )}
 
         {pendingStep && (
           <div className="text-center mb-6">
-            <div className="text-gray-500 text-sm">Preparazione ruota...</div>
+            <div className="text-sm" style={{ color: 'var(--c-muted)' }}>Preparazione ruota...</div>
           </div>
         )}
 
@@ -597,7 +626,7 @@ export default function EndSeason() {
 
           {showNext && (
             <button onClick={goNext} disabled={saving}
-              className="bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95">
+              className="btn-ghost text-lg px-10 py-3 disabled:opacity-40" style={{ fontWeight: 700 }}>
               {saving ? 'Salvataggio...' :
                phase === 'signing' && signingStep === 'replace' ? 'CONFERMA ACQUISTO ✓' : 'AVANTI →'}
             </button>
