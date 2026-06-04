@@ -234,6 +234,18 @@ router.post("/:sessionId/finish", async (req, res) => {
 
     if (!session) return res.status(404).json({ error: "Sessione non trovata" });
 
+    // Se già finita restituisce i dati salvati senza ricalcolare
+    if (session.finished && session.finalScore && session.standings) {
+      const standings = JSON.parse(session.standings)
+      const label = getPositionLabel(session.position)
+      return res.json({
+        position: session.position,
+        finalScore: session.finalScore,
+        label,
+        standings,
+      })
+    }
+
     const leagueTeams = leagues[session.league].teams;
     const leagueData = leagues[session.league];
     const playedMatches = session.matches.filter(m => m.played);
@@ -250,17 +262,37 @@ router.post("/:sessionId/finish", async (req, res) => {
     );
 
     const position = standings.findIndex((s) => s.name === "La Tua Squadra") + 1;
+    const avgRating = session.players.length > 0
+      ? Math.round(session.players.reduce((s, p) => s + p.rating, 0) / session.players.length)
+      : 80;
+
     const finalScore = calculateFinalScore(
       position,
       standings.length,
       session.budget,
-      leagueData.multiplier
+      leagueData.multiplier,
+      avgRating
     );
+
+    await prisma.session.update({
+      where: { id: session.id },
+      data: {
+        finalScore,
+        finished: true,
+        position,
+        standings: JSON.stringify(standings),
+      },
+    });
 
     if (!session.finished) {
       await prisma.session.update({
         where: { id: session.id },
-        data: { finalScore, finished: true },
+        data: {
+          finalScore,
+          finished: true,
+          position,
+          standings: JSON.stringify(standings),
+        },
       });
 
       await prisma.leaderboardEntry.create({
@@ -333,13 +365,11 @@ router.post("/:sessionId/generate-first-leg", async (req, res) => {
     const leagueTeams = leagues[session.league].teams;
     const { yourMatches, simulatedRounds } = simulateSeason(session.players, leagueTeams);
 
-    // Salva tutto in calendarData incluso il ritorno pre-simulato
     const firstLeg = yourMatches
       .filter(m => m.matchday <= leagueTeams.length)
       .map(m => ({ ...m, played: true }));
     const secondLeg = yourMatches.filter(m => m.matchday > leagueTeams.length);
 
-    
     await prisma.session.update({
       where: { id: session.id },
       data: {
@@ -347,7 +377,6 @@ router.post("/:sessionId/generate-first-leg", async (req, res) => {
       },
     });
 
-    // Salva solo le partite dell'andata
     await prisma.match.createMany({
       data: firstLeg.map((m) => ({
         opponent: m.opponent,
@@ -361,7 +390,6 @@ router.post("/:sessionId/generate-first-leg", async (req, res) => {
       })),
     });
 
-    // Calcola classifica metà stagione
     const standings = calculateStandingsFromCalendar(
       firstLeg,
       "La Tua Squadra",
@@ -369,14 +397,6 @@ router.post("/:sessionId/generate-first-leg", async (req, res) => {
       simulatedRounds,
       leagueTeams.length
     );
-
-    console.log("First leg matches:", firstLeg.length)
-    console.log("Your stats:", firstLeg.reduce((s, m) => ({
-      pts: s.pts + (m.goalsFor > m.goalsAgainst ? 3 : m.goalsFor === m.goalsAgainst ? 1 : 0),
-      gf: s.gf + m.goalsFor,
-      ga: s.ga + m.goalsAgainst
-    }), { pts: 0, gf: 0, ga: 0 }))
-    console.log("Standings your team:", standings.find(s => s.name === 'La Tua Squadra'))
 
     res.json({ standings, totalMatches: yourMatches.length });
   } catch (error) {
@@ -398,19 +418,16 @@ router.post("/:sessionId/generate-second-leg", async (req, res) => {
     const calendarData = JSON.parse(session.calendarData);
     const simulatedRounds = calendarData.simulatedRounds || [];
 
-    // Prendi le partite dell'andata già salvate per replicarle specularmente
     const firstLegMatches = session.matches
       .filter(m => m.matchday <= leagueTeams.length)
       .sort((a, b) => a.matchday - b.matchday);
 
-    // Rigenera il ritorno con i giocatori aggiornati
-    // mantenendo gli stessi avversari dell'andata ma invertendo casa/trasferta
     const yourStrength = session.players.length > 0
       ? session.players.reduce((s, p) => s + p.rating, 0) / session.players.length
       : 60;
 
     const newSecondLeg = firstLegMatches.map((m, i) => {
-      const homeGame = !m.homeGame; // inverti casa/trasferta
+      const homeGame = !m.homeGame;
       const team = leagueTeams.find(t => t.name === m.opponent);
       const opponentStrength = homeGame
         ? team?.strength || 70
@@ -440,11 +457,10 @@ router.post("/:sessionId/generate-second-leg", async (req, res) => {
         homeGame,
         goalsFor,
         goalsAgainst,
-        matchday: leagueTeams.length + i + 1, // matchday 21-40
+        matchday: leagueTeams.length + i + 1,
       };
     });
 
-    // Aggiorna calendarData
     await prisma.session.update({
       where: { id: session.id },
       data: { calendarData: JSON.stringify({ simulatedRounds }) },

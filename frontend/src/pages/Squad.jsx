@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 import { IconArrowRight } from '../components/Icons'
+import useBlockBack from '../hooks/useBlockBack'
+import useGameRedirect from '../hooks/useGameRedirect'
+
 
 const POSITION_COLORS = {
   GK: { bg: 'bg-yellow-500', text: 'text-yellow-900', border: 'border-yellow-400' },
@@ -60,6 +63,14 @@ function PlayerDot({ player }) {
 
 export default function Squad() {
   const { sessionId } = useParams()
+  useBlockBack()
+  const redirectChecked = useGameRedirect(sessionId, 'nome-pagina')
+
+  if (!redirectChecked) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="text-gray-400">Caricamento...</div>
+    </div>
+  )
   const [searchParams] = useSearchParams()
   const isAutoMode = searchParams.get('mode') === 'auto'
   const navigate = useNavigate()

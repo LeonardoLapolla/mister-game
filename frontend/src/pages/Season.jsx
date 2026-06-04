@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 import { IconChart, IconHome, IconPlane, IconTrophy, IconHandshake, IconSkull, IconDice, IconPause, IconArrowUp, IconArrowDown, IconArrowRight, IconRefresh, IconSlot } from '../components/Icons'
+import useBlockBack from '../hooks/useBlockBack'
+import useGameRedirect from '../hooks/useGameRedirect'
+
 
 const EVENTS = [
   { id: 'hot_striker', emoji: '🔥', text: 'Il tuo bomber è in forma smagliante!', type: 'bonus', win: +7, draw: 0, loss: 0 },
@@ -220,6 +223,14 @@ function StandingsTable({ standings, title, teamName }) {
 
 export default function Season() {
   const { sessionId } = useParams()
+  useBlockBack()
+  const redirectChecked = useGameRedirect(sessionId, 'nome-pagina')
+
+  if (!redirectChecked) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="text-gray-400">Caricamento...</div>
+    </div>
+  )
   const navigate = useNavigate()
   const { session, setSession, matches, setMatches } = useGameStore()
 

@@ -2,9 +2,20 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 import { IconTrophy, IconMedal, IconStar, IconChart } from '../components/Icons'
+import useBlockBack from '../hooks/useBlockBack'
+import useGameRedirect from '../hooks/useGameRedirect'
+
 
 export default function Results() {
   const { sessionId } = useParams()
+  useBlockBack()
+  const redirectChecked = useGameRedirect(sessionId, 'nome-pagina')
+
+  if (!redirectChecked) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-950">
+      <div className="text-gray-400">Caricamento...</div>
+    </div>
+  )
   const navigate = useNavigate()
   const { setStandings, setFinalScore, session } = useGameStore()
 
@@ -49,6 +60,7 @@ export default function Results() {
 
   const totalTeams = data.standings.length
   const teamName = session?.nickname || 'La Tua Squadra'
+  const yourTeam = data.standings.find(s => s.name === 'La Tua Squadra') || {}
 
   const getPositionStyle = (pos) => {
     if (pos === 1) return { rowBg: 'rgba(255,171,0,0.08)', borderColor: 'var(--c-amber)', textColor: 'var(--c-amber)' }
@@ -56,6 +68,20 @@ export default function Results() {
     if (pos <= 6) return { rowBg: 'rgba(0,230,118,0.08)', borderColor: 'var(--c-green)', textColor: 'var(--c-green)' }
     if (pos >= totalTeams - 2) return { rowBg: 'rgba(255,61,87,0.08)', borderColor: 'var(--c-red)', textColor: 'var(--c-red)' }
     return { rowBg: 'var(--c-surface)', borderColor: 'transparent', textColor: 'var(--c-faint)' }
+  }
+
+  const handleContinue = () => {
+    const params = new URLSearchParams({
+      position: data.position,
+      points: yourTeam.pts || 0,
+      wins: yourTeam.w || 0,
+      draws: yourTeam.d || 0,
+      losses: yourTeam.l || 0,
+      gf: yourTeam.gf || 0,
+      ga: yourTeam.ga || 0,
+      score: data.finalScore,
+    })
+    navigate(`/end-season/${sessionId}?${params.toString()}`)
   }
 
   return (
@@ -83,7 +109,6 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Classifica finale */}
         <div className="mb-10">
           <h2 className="section-title text-2xl md:text-3xl mb-4 tracking-widest">Classifica Finale</h2>
           <div className="overflow-x-auto">
@@ -139,7 +164,7 @@ export default function Results() {
         </div>
 
         <button
-          onClick={() => navigate(`/end-season/${sessionId}?position=${data.position}&points=${data.finalScore}&wins=${data.standings.find(s => s.name === 'La Tua Squadra')?.w || 0}&draws=${data.standings.find(s => s.name === 'La Tua Squadra')?.d || 0}&losses=${data.standings.find(s => s.name === 'La Tua Squadra')?.l || 0}&gf=${data.standings.find(s => s.name === 'La Tua Squadra')?.gf || 0}&ga=${data.standings.find(s => s.name === 'La Tua Squadra')?.ga || 0}`)}
+          onClick={handleContinue}
           className="btn-primary w-full py-4 text-xl" style={{ fontWeight: 800 }}
         >
           CONTINUA →

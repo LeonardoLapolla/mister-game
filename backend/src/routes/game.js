@@ -3,7 +3,8 @@ const router = express.Router();
 const { leagues, formations } = require("../data/leagues");
 const prisma = require("../prismaClient");
 
-// Crea nuova sessione di gioco
+const MAX_SEASONS = 3;
+
 router.post("/new", async (req, res) => {
   try {
     const { nickname, league, budget, formation } = req.body;
@@ -39,7 +40,6 @@ router.post("/new", async (req, res) => {
   }
 });
 
-// Recupera sessione esistente
 router.get("/:id", async (req, res) => {
   try {
     const session = await prisma.session.findUnique({
@@ -58,83 +58,83 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Salva storia stagione e prepara nuova stagione
 router.post("/:id/next-season", async (req, res) => {
   try {
-    const { position, points, wins, draws, losses, goalsFor, goalsAgainst } = req.body
+    const { position, points, wins, draws, losses, goalsFor, goalsAgainst, finalScore } = req.body;
 
     const session = await prisma.session.findUnique({
       where: { id: req.params.id },
       include: { matches: true },
-    })
+    });
 
-    if (!session) return res.status(404).json({ error: "Sessione non trovata" })
+    if (!session) return res.status(404).json({ error: "Sessione non trovata" });
 
-    const totalTeams = leagues[session.league].teams.length
-    const isRelegated = position > totalTeams - 3
+    const totalTeams = leagues[session.league].teams.length;
+    const isRelegated = position > totalTeams - 3;
 
-    if (isRelegated) {
-      return res.json({ relegated: true })
-    }
-
-    if (session.seasonNumber >= 5) {
-      return res.json({ maxSeasons: true })
-    }
-
-    // Salva storia stagione corrente
-    await prisma.seasonHistory.create({
-      data: {
+    // Controlla se questa stagione è già stata salvata
+    const existingHistory = await prisma.seasonHistory.findFirst({
+      where: {
         sessionId: session.id,
         seasonNumber: session.seasonNumber,
-        position,
-        points,
-        wins,
-        draws,
-        losses,
-        goalsFor,
-        goalsAgainst,
       }
-    })
+    });
 
-    // Cancella le partite della stagione precedente
-    await prisma.match.deleteMany({
-      where: { sessionId: session.id }
-    })
+    // Salva solo se non esiste già
+    if (!existingHistory) {
+      await prisma.seasonHistory.create({
+        data: {
+          sessionId: session.id,
+          seasonNumber: session.seasonNumber,
+          position,
+          points,
+          wins,
+          draws,
+          losses,
+          goalsFor,
+          goalsAgainst,
+          finalScore: finalScore || 0,
+        }
+      });
 
-    // Aggiorna sessione per nuova stagione
-    await prisma.session.update({
-      where: { id: session.id },
-      data: {
-        seasonNumber: session.seasonNumber + 1,
-        finished: false,
-        finalScore: null,
-        calendarData: null,
-        budgetSpent: 0,
+      if (!isRelegated && session.seasonNumber < MAX_SEASONS) {
+        await prisma.match.deleteMany({ where: { sessionId: session.id } });
+        await prisma.session.update({
+          where: { id: session.id },
+          data: {
+            seasonNumber: session.seasonNumber + 1,
+            finished: false,
+            finalScore: null,
+            calendarData: null,
+            budgetSpent: 0,
+          }
+        });
       }
-    })
+    }
 
-    res.json({ success: true, newSeason: session.seasonNumber + 1 })
+    if (isRelegated) return res.json({ relegated: true });
+    if (session.seasonNumber >= MAX_SEASONS) return res.json({ maxSeasons: true });
+
+    res.json({ success: true, newSeason: session.seasonNumber + 1 });
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: "Errore nel passaggio di stagione" })
+    console.error(error);
+    res.status(500).json({ error: "Errore nel passaggio di stagione" });
   }
-})
+});
 
-// Recupera storia stagioni
 router.get("/:id/history", async (req, res) => {
   try {
     const history = await prisma.seasonHistory.findMany({
       where: { sessionId: req.params.id },
       orderBy: { seasonNumber: 'asc' }
-    })
-    res.json({ history })
+    });
+    res.json({ history });
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: "Errore nel recupero della storia" })
+    console.error(error);
+    res.status(500).json({ error: "Errore nel recupero della storia" });
   }
-})
+});
 
-// Dati statici campionati e formazioni
 router.get("/data/setup", (req, res) => {
   res.json({ leagues, formations });
 });

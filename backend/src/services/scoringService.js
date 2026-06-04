@@ -1,10 +1,15 @@
-function calculateFinalScore(position, totalTeams, budget, leagueMultiplier) {
-  // Punteggio base dalla posizione (da 0 a 1000)
+function calculateStrengthMultiplier(avgRating) {
+  if (avgRating < 75) return 1.5
+  if (avgRating < 80) return 1.3
+  if (avgRating < 85) return 1.1
+  return 1.0
+}
+
+function calculateFinalScore(position, totalTeams, budget, leagueMultiplier, avgRating) {
   const positionScore = Math.round(
     ((totalTeams - position) / (totalTeams - 1)) * 1000
   );
 
-  // Moltiplicatore budget (più basso il budget, più alto il moltiplicatore)
   const budgetMultipliers = {
     30: 2.0,
     50: 1.5,
@@ -13,7 +18,6 @@ function calculateFinalScore(position, totalTeams, budget, leagueMultiplier) {
   }
   const budgetMultiplier = budgetMultipliers[budget] || 1.0;
 
-  // Bonus posizione speciale
   let positionBonus = 0;
   if (position === 1) positionBonus = 500;
   else if (position === 2) positionBonus = 300;
@@ -21,8 +25,9 @@ function calculateFinalScore(position, totalTeams, budget, leagueMultiplier) {
   else if (position <= 6) positionBonus = 75;
   else if (position <= 10) positionBonus = 25;
 
-  // Calcolo finale
-  const rawScore = (positionScore + positionBonus) * budgetMultiplier * leagueMultiplier;
+  const strengthMultiplier = calculateStrengthMultiplier(avgRating || 80);
+
+  const rawScore = (positionScore + positionBonus) * budgetMultiplier * leagueMultiplier * strengthMultiplier;
   return Math.round(rawScore);
 }
 
@@ -37,4 +42,4 @@ function getPositionLabel(position) {
   return "💀 Retrocesso";
 }
 
-module.exports = { calculateFinalScore, getPositionLabel };
+module.exports = { calculateFinalScore, getPositionLabel, calculateStrengthMultiplier };

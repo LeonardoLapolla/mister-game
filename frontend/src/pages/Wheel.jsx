@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 import { IconSlot, IconMoney, IconClipboard, IconBall } from '../components/Icons'
+import useBlockBack from '../hooks/useBlockBack'
+import useGameRedirect from '../hooks/useGameRedirect'
+
 
 const BUDGETS = [
   { value: 30, label: '30M', color: '#ef4444', description: 'Massimo punteggio' },
@@ -169,6 +172,7 @@ function SpinWheel({ items, onResult, locked, onLock }) {
 const STEPS = ['league', 'budget', 'formation', 'nickname', 'players']
 
 export default function Wheel() {
+  useBlockBack()
   const navigate = useNavigate()
   const { setSession } = useGameStore()
 

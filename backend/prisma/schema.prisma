@@ -22,6 +22,8 @@ model Session {
   calendarData String?
   seasonNumber  Int      @default(1)
   history       SeasonHistory[]
+  position  Int?     @default(0)
+  standings String?
 }
 
 model SeasonHistory {
@@ -37,6 +39,7 @@ model SeasonHistory {
   createdAt    DateTime @default(now())
   sessionId    String
   session      Session  @relation(fields: [sessionId], references: [id])
+  finalScore Int @default(0)
 }
 
 model Player {
