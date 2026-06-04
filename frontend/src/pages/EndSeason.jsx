@@ -179,13 +179,13 @@ export default function EndSeason() {
   const [signingRole, setSigningRole] = useState(null)
   const [newPlayer, setNewPlayer] = useState(null)
   const [playerToReplace, setPlayerToReplace] = useState(null)
+  const [pendingTransfer, setPendingTransfer] = useState(null)
   const [wheelItems, setWheelItems] = useState([])
   const [pendingStep, setPendingStep] = useState(null)
   const [completedSignings, setCompletedSignings] = useState([])
   const [myPlayers, setMyPlayers] = useState([])
   const [saving, setSaving] = useState(false)
 
-  // Dati stagione corrente dai query params
   const position = parseInt(searchParams.get('position')) || 10
   const points = parseInt(searchParams.get('points')) || 0
   const wins = parseInt(searchParams.get('wins')) || 0
@@ -193,6 +193,7 @@ export default function EndSeason() {
   const losses = parseInt(searchParams.get('losses')) || 0
   const goalsFor = parseInt(searchParams.get('gf')) || 0
   const goalsAgainst = parseInt(searchParams.get('ga')) || 0
+  const score = parseInt(searchParams.get('score')) || 0
 
   const totalTeams = 21
   const isRelegated = position > totalTeams - 3
@@ -233,19 +234,31 @@ export default function EndSeason() {
     }
   }
 
+  const seasonBody = { position, points, wins, draws, losses, goalsFor, goalsAgainst, finalScore: score }
+
   const handleNextSeason = async () => {
     const res = await fetch(`/api/game/${sessionId}/next-season`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ position, points, wins, draws, losses, goalsFor, goalsAgainst }),
+      body: JSON.stringify(seasonBody),
     })
     const d = await res.json()
-
     if (d.relegated) { setPhase('relegated'); return }
     if (d.maxSeasons) { setPhase('done'); return }
-
     setPhase('budget')
     setResetKey(k => k + 1)
+  }
+
+  const handleFinalRecap = async () => {
+    await fetch(`/api/game/${sessionId}/next-season`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(seasonBody),
+    })
+    const hRes = await fetch(`/api/game/${sessionId}/history`)
+    const hData = await hRes.json()
+    setHistory(hData.history || [])
+    setPhase(isRelegated ? 'relegated' : 'done')
   }
 
   const getBudgetWheelItems = () => {
@@ -307,7 +320,26 @@ export default function EndSeason() {
         return
       } else if (signingStep === 'replace') {
         setPlayerToReplace(item)
+        setPendingTransfer({ in: newPlayer, out: item })
       }
+    }
+  }
+
+  const skipToNextSigning = () => {
+    setPendingTransfer(null)
+    const nextSigning = currentSigning + 1
+    if (nextSigning >= signingCount) {
+      navigate(`/squad/${sessionId}`)
+    } else {
+      setCurrentSigning(nextSigning)
+      setSigningStep('league')
+      setSigningLeague(null)
+      setSigningRole(null)
+      setNewPlayer(null)
+      setPlayerToReplace(null)
+      setWheelItems([])
+      setResult(null)
+      setResetKey(k => k + 1)
     }
   }
 
@@ -319,8 +351,6 @@ export default function EndSeason() {
     } else if (phase === 'signing') {
       if (signingStep === 'league') {
         setSigningStep('role'); setResult(null); setResetKey(k => k + 1)
-      } else if (signingStep === 'replace') {
-        await executeTransfer()
       }
     }
   }
@@ -331,33 +361,23 @@ export default function EndSeason() {
       await fetch(`/api/market/${sessionId}/sell`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerName: playerToReplace.name }),
+        body: JSON.stringify({ playerName: pendingTransfer.out.name }),
       })
       await fetch(`/api/market/${sessionId}/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerName: newPlayer.name }),
+        body: JSON.stringify({ playerName: pendingTransfer.in.name }),
       })
 
-      const newCompleted = [...completedSignings, { in: newPlayer, out: playerToReplace }]
+      const newCompleted = [...completedSignings, { in: pendingTransfer.in, out: pendingTransfer.out }]
       setCompletedSignings(newCompleted)
-      const updated = myPlayers.filter(p => p.name !== playerToReplace.name).concat({ ...newPlayer })
+      const updated = myPlayers
+        .filter(p => p.name !== pendingTransfer.out.name)
+        .concat({ ...pendingTransfer.in })
       setMyPlayers(updated)
 
-      const nextSigning = currentSigning + 1
-      if (nextSigning >= signingCount) {
-        navigate(`/squad/${sessionId}`)
-      } else {
-        setCurrentSigning(nextSigning)
-        setSigningStep('league')
-        setSigningLeague(null)
-        setSigningRole(null)
-        setNewPlayer(null)
-        setPlayerToReplace(null)
-        setWheelItems([])
-        setResult(null)
-        setResetKey(k => k + 1)
-      }
+      setPendingTransfer(null)
+      skipToNextSigning()
     } catch (err) {
       console.error(err)
     } finally {
@@ -405,6 +425,7 @@ export default function EndSeason() {
 
   // Riepilogo finale
   if (phase === 'relegated' || phase === 'done') {
+    const totalScore = history.reduce((sum, h) => sum + (h.finalScore || 0), 0)
     return (
       <div className="min-h-screen bg-gray-950 px-4 py-8">
         <div className="max-w-2xl mx-auto">
@@ -416,6 +437,13 @@ export default function EndSeason() {
             <p className="text-gray-500">
               {phase === 'relegated' ? 'La tua avventura finisce qui.' : 'Hai completato tutte le stagioni!'}
             </p>
+          </div>
+
+          {/* Punteggio totale */}
+          <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-5 text-center mb-6">
+            <div className="text-gray-400 text-sm mb-1">Punteggio totale</div>
+            <div className="text-5xl font-black text-green-400">{totalScore}</div>
+            <div className="text-gray-500 text-xs mt-1">su {history.length} stagion{history.length === 1 ? 'e' : 'i'}</div>
           </div>
 
           <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6">
@@ -435,7 +463,7 @@ export default function EndSeason() {
                   <div className="flex items-center gap-4 text-xs text-gray-400">
                     <span>{h.wins}V {h.draws}P {h.losses}S</span>
                     <span>{h.goalsFor}:{h.goalsAgainst}</span>
-                    <span className="text-white font-black">{h.points} pt</span>
+                    <span className="text-green-400 font-black">{h.finalScore || 0} pts</span>
                   </div>
                 </div>
               ))}
@@ -499,7 +527,7 @@ export default function EndSeason() {
                     </div>
                     <div className="flex items-center gap-4 text-xs text-gray-400">
                       <span>{h.wins}V {h.draws}P {h.losses}S</span>
-                      <span className="text-white font-black">{h.points} pt</span>
+                      <span className="text-green-400 font-black">{h.finalScore || 0} pts</span>
                     </div>
                   </div>
                 ))}
@@ -529,7 +557,7 @@ export default function EndSeason() {
           <button
             onClick={() => {
               if (isRelegated || seasonNumber >= MAX_SEASONS) {
-                setPhase(isRelegated ? 'relegated' : 'done')
+                handleFinalRecap()
               } else {
                 handleNextSeason()
               }
@@ -543,7 +571,7 @@ export default function EndSeason() {
     )
   }
 
-  const showNext = result && !pendingStep
+  const showNext = result && !pendingStep && !pendingTransfer
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-8">
@@ -570,7 +598,36 @@ export default function EndSeason() {
           </div>
         )}
 
-        {result && !pendingStep && (
+        {pendingTransfer && (
+          <div className="w-full bg-gray-900 rounded-2xl p-5 border border-gray-800 mb-6">
+            <div className="text-center text-white font-black text-lg mb-4">Confermi lo scambio?</div>
+            <div className="flex items-center justify-center gap-4 mb-5">
+              <div className="text-center flex-1">
+                <div className="text-red-400 text-xs font-bold mb-1">FUORI</div>
+                <div className="text-white font-semibold">{pendingTransfer.out.name}</div>
+                <div className="text-gray-500 text-xs">OVR {pendingTransfer.out.rating}</div>
+              </div>
+              <div className="text-gray-500 text-2xl">↔</div>
+              <div className="text-center flex-1">
+                <div className="text-green-400 text-xs font-bold mb-1">DENTRO</div>
+                <div className="text-white font-semibold">{pendingTransfer.in.name}</div>
+                <div className="text-gray-500 text-xs">OVR {pendingTransfer.in.rating}</div>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={executeTransfer} disabled={saving}
+                className="flex-1 bg-green-500 hover:bg-green-400 disabled:bg-gray-700 text-black font-black py-3 rounded-xl transition-all">
+                {saving ? '...' : '✅ CONFERMA'}
+              </button>
+              <button onClick={skipToNextSigning} disabled={saving}
+                className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-black py-3 rounded-xl transition-all border border-red-500/30">
+                ❌ RIFIUTA
+              </button>
+            </div>
+          </div>
+        )}
+
+        {result && !pendingStep && !pendingTransfer && (
           <div className="text-center mb-6">
             <div className="inline-block bg-green-500/10 border border-green-500/30 rounded-2xl px-6 py-3">
               <div className="text-xl font-black text-green-400">{getResultLabel()}</div>
@@ -584,25 +641,26 @@ export default function EndSeason() {
           </div>
         )}
 
-        <div className="flex flex-col items-center gap-6">
-          <SpinWheel
-            items={
-              phase === 'budget' ? getBudgetWheelItems() :
-              phase === 'count' ? getCountWheelItems() :
-              getSigningWheelItems()
-            }
-            onResult={handleResult}
-            resetKey={resetKey}
-          />
+        {!pendingTransfer && (
+          <div className="flex flex-col items-center gap-6">
+            <SpinWheel
+              items={
+                phase === 'budget' ? getBudgetWheelItems() :
+                phase === 'count' ? getCountWheelItems() :
+                getSigningWheelItems()
+              }
+              onResult={handleResult}
+              resetKey={resetKey}
+            />
 
-          {showNext && (
-            <button onClick={goNext} disabled={saving}
-              className="bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95">
-              {saving ? 'Salvataggio...' :
-               phase === 'signing' && signingStep === 'replace' ? 'CONFERMA ACQUISTO ✓' : 'AVANTI →'}
-            </button>
-          )}
-        </div>
+            {showNext && (
+              <button onClick={goNext} disabled={saving}
+                className="bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95">
+                {saving ? 'Salvataggio...' : 'AVANTI →'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

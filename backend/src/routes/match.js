@@ -250,11 +250,16 @@ router.post("/:sessionId/finish", async (req, res) => {
     );
 
     const position = standings.findIndex((s) => s.name === "La Tua Squadra") + 1;
+    const avgRating = session.players.length > 0
+  ? Math.round(session.players.reduce((s, p) => s + p.rating, 0) / session.players.length)
+  : 80;
+
     const finalScore = calculateFinalScore(
       position,
       standings.length,
       session.budget,
-      leagueData.multiplier
+      leagueData.multiplier,
+      avgRating
     );
 
     if (!session.finished) {

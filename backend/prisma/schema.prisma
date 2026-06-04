@@ -37,6 +37,7 @@ model SeasonHistory {
   createdAt    DateTime @default(now())
   sessionId    String
   session      Session  @relation(fields: [sessionId], references: [id])
+  finalScore Int @default(0)
 }
 
 model Player {

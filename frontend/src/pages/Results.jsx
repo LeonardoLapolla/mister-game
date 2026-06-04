@@ -48,6 +48,7 @@ export default function Results() {
 
   const totalTeams = data.standings.length
   const teamName = session?.nickname || 'La Tua Squadra'
+  const yourTeam = data.standings.find(s => s.name === 'La Tua Squadra') || {}
 
   const getPositionStyle = (pos) => {
     if (pos === 1) return { row: 'bg-yellow-500/10', border: 'border-l-4 border-yellow-400', text: 'text-yellow-400' }
@@ -57,11 +58,24 @@ export default function Results() {
     return { row: 'bg-gray-900', border: '', text: 'text-gray-600' }
   }
 
+  const handleContinue = () => {
+    const params = new URLSearchParams({
+      position: data.position,
+      points: yourTeam.pts || 0,
+      wins: yourTeam.w || 0,
+      draws: yourTeam.d || 0,
+      losses: yourTeam.l || 0,
+      gf: yourTeam.gf || 0,
+      ga: yourTeam.ga || 0,
+      score: data.finalScore,
+    })
+    navigate(`/end-season/${sessionId}?${params.toString()}`)
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-8">
       <div className="max-w-3xl mx-auto">
 
-        {/* Risultato principale */}
         <div className="text-center mb-12">
           <div className="text-7xl mb-4">
             {data.position === 1 ? '🏆' :
@@ -74,11 +88,10 @@ export default function Results() {
           <p className="text-gray-500 mb-6">{data.position}° posto in classifica</p>
           <div className="inline-block bg-green-500/10 border border-green-500/30 rounded-2xl px-8 py-4">
             <div className="text-5xl font-black text-green-400">{data.finalScore}</div>
-            <div className="text-gray-500 text-sm mt-1">punti totali</div>
+            <div className="text-gray-500 text-sm mt-1">punti stagione</div>
           </div>
         </div>
 
-        {/* Classifica finale */}
         <div className="mb-10">
           <h2 className="text-xl font-black text-white mb-4">Classifica finale</h2>
           <div className="space-y-1">
@@ -86,7 +99,6 @@ export default function Results() {
               const isYou = team.name === 'La Tua Squadra'
               const pos = i + 1
               const style = getPositionStyle(pos)
-
               return (
                 <div
                   key={team.name}
@@ -110,25 +122,16 @@ export default function Results() {
             })}
           </div>
 
-          {/* Legenda */}
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-yellow-400 inline-block"></span> Campione
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-blue-400 inline-block"></span> Champions League
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-green-500 inline-block"></span> Europa League
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-red-500 inline-block"></span> Retrocessione
-            </span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-400 inline-block"></span> Campione</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-400 inline-block"></span> Champions League</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block"></span> Europa League</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500 inline-block"></span> Retrocessione</span>
           </div>
         </div>
 
         <button
-          onClick={() => navigate(`/end-season/${sessionId}?position=${data.position}&points=${data.finalScore}&wins=${data.standings.find(s => s.name === 'La Tua Squadra')?.w || 0}&draws=${data.standings.find(s => s.name === 'La Tua Squadra')?.d || 0}&losses=${data.standings.find(s => s.name === 'La Tua Squadra')?.l || 0}&gf=${data.standings.find(s => s.name === 'La Tua Squadra')?.gf || 0}&ga=${data.standings.find(s => s.name === 'La Tua Squadra')?.ga || 0}`)}
+          onClick={handleContinue}
           className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
         >
           CONTINUA →
