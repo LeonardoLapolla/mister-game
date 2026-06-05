@@ -21,7 +21,10 @@ model Session {
   finished    Boolean  @default(false)
   calendarData String?
   seasonNumber  Int      @default(1)
+  europaData String?
   history       SeasonHistory[]
+  position  Int?     @default(0)
+  standings String?
 }
 
 model SeasonHistory {

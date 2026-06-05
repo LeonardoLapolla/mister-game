@@ -6,8 +6,8 @@ import Results from './pages/Results'
 import Squad from './pages/Squad'
 import Transfer from './pages/Transfer'
 import EndSeason from './pages/EndSeason'
-
-
+import EuropaGroup from './pages/EuropaGroup'
+import EuropaKnockout from './pages/EuropaKnockout'
 
 export default function App() {
   return (
@@ -20,6 +20,8 @@ export default function App() {
         <Route path="/squad/:sessionId" element={<Squad />} />
         <Route path="/transfer/:sessionId" element={<Transfer />} />
         <Route path="/end-season/:sessionId" element={<EndSeason />} />
+        <Route path="/europa-group/:sessionId" element={<EuropaGroup />} />
+        <Route path="/europa-knockout/:sessionId" element={<EuropaKnockout />} />
       </Routes>
     </div>
   )

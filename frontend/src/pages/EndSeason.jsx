@@ -61,10 +61,8 @@ function SpinWheel({ items, onResult, resetKey }) {
     const W = canvas.width, H = canvas.height
     const cx = W / 2, cy = H / 2
     const R = Math.min(W, H) / 2 - 8
-
     ctx.clearRect(0, 0, W, H)
     const arc = (2 * Math.PI) / items.length
-
     items.forEach((item, i) => {
       const start = angle + i * arc
       const end = start + arc
@@ -77,7 +75,6 @@ function SpinWheel({ items, onResult, resetKey }) {
       ctx.strokeStyle = '#111827'
       ctx.lineWidth = 2
       ctx.stroke()
-
       ctx.save()
       ctx.translate(cx, cy)
       ctx.rotate(start + arc / 2)
@@ -90,7 +87,6 @@ function SpinWheel({ items, onResult, resetKey }) {
       ctx.fillText(label, R - 10, 5)
       ctx.restore()
     })
-
     ctx.beginPath()
     ctx.arc(cx, cy, 18, 0, 2 * Math.PI)
     ctx.fillStyle = '#111827'
@@ -111,12 +107,10 @@ function SpinWheel({ items, onResult, resetKey }) {
     if (spinning || locked || items.length === 0) return
     setLocked(true)
     setSpinning(true)
-
     const totalRotation = (10 + Math.random() * 10) * 2 * Math.PI
     const duration = 3000 + Math.random() * 1500
     const start = performance.now()
     const startAngle = angleRef.current
-
     function animate(now) {
       const elapsed = now - start
       const progress = Math.min(elapsed / duration, 1)
@@ -170,6 +164,7 @@ export default function EndSeason() {
   const [phase, setPhase] = useState('recap')
   const [resetKey, setResetKey] = useState(0)
   const [result, setResult] = useState(null)
+  const [europaCompetition, setEuropaCompetition] = useState(null)
 
   const [budget, setBudget] = useState(null)
   const [signingCount, setSigningCount] = useState(0)
@@ -194,6 +189,7 @@ export default function EndSeason() {
   const goalsFor = parseInt(searchParams.get('gf')) || 0
   const goalsAgainst = parseInt(searchParams.get('ga')) || 0
   const score = parseInt(searchParams.get('score')) || 0
+  const fromEuropa = searchParams.get('fromEuropa') === 'true'
 
   const totalTeams = 21
   const isRelegated = position > totalTeams - 3
@@ -210,6 +206,18 @@ export default function EndSeason() {
       setResetKey(k => k + 1)
     }
   }, [wheelItems, pendingStep])
+
+  // Se arriva da europa, vai direttamente al mercato
+  useEffect(() => {
+    if (fromEuropa && !loading && data) {
+      const seasonNumber = data?.seasonNumber || 1
+      if (isRelegated || seasonNumber > MAX_SEASONS) {
+        handleFinalRecap()
+      } else {
+        handleNextSeason()
+      }
+    }
+  }, [fromEuropa, loading, data])
 
   const fetchData = async () => {
     try {
@@ -234,27 +242,85 @@ export default function EndSeason() {
     }
   }
 
-  const seasonBody = { position, points, wins, draws, losses, goalsFor, goalsAgainst, finalScore: score }
+  useEffect(() => {
+  if (position && data) {
+    // Controlla prima se c'è già un torneo giocato
+    fetch(`/api/europa/${sessionId}/state`)
+      .then(r => {
+        if (!r.ok) {
+          // Nessun torneo — controlla se è qualificato
+          return fetch(`/api/europa/${sessionId}/check`)
+            .then(r2 => r2.json())
+            .then(d => setEuropaCompetition(d.competition))
+        }
+        return r.json().then(d => {
+          // Torneo già giocato (fase eliminated o winner) — non mostrare il bottone
+          if (d.phase === 'eliminated' || d.phase === 'winner') {
+            setEuropaCompetition(null)
+          } else {
+            setEuropaCompetition(d.competition)
+          }
+        })
+      })
+      .catch(() => {})
+  }
+}, [position, data])
 
   const handleNextSeason = async () => {
+    let europaScore = 0
+    try {
+      const europaRes = await fetch(`/api/europa/${sessionId}/score`)
+      const europaData = await europaRes.json()
+      europaScore = europaData.score || 0
+    } catch (err) {}
+
+    const totalScore = score + europaScore
+
     const res = await fetch(`/api/game/${sessionId}/next-season`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(seasonBody),
+      body: JSON.stringify({
+        position, points, wins, draws, losses, goalsFor, goalsAgainst,
+        finalScore: totalScore,
+      }),
     })
     const d = await res.json()
+
     if (d.relegated) { setPhase('relegated'); return }
-    if (d.maxSeasons) { setPhase('done'); return }
+
+    if (d.maxSeasons) {
+      // Ultima stagione — se viene da europa vai al riepilogo finale
+      // ricarica history aggiornata poi mostra done
+      const hRes = await fetch(`/api/game/${sessionId}/history`)
+      const hData = await hRes.json()
+      setHistory(hData.history || [])
+      setPhase('done')
+      return
+    }
+
     setPhase('budget')
     setResetKey(k => k + 1)
   }
 
   const handleFinalRecap = async () => {
+    let europaScore = 0
+    try {
+      const europaRes = await fetch(`/api/europa/${sessionId}/score`)
+      const europaData = await europaRes.json()
+      europaScore = europaData.score || 0
+    } catch (err) {}
+
+    const totalScore = score + europaScore
+
     await fetch(`/api/game/${sessionId}/next-season`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(seasonBody),
+      body: JSON.stringify({
+        position, points, wins, draws, losses, goalsFor, goalsAgainst,
+        finalScore: totalScore,
+      }),
     })
+
     const hRes = await fetch(`/api/game/${sessionId}/history`)
     const hData = await hRes.json()
     setHistory(hData.history || [])
@@ -368,14 +434,10 @@ export default function EndSeason() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerName: pendingTransfer.in.name }),
       })
-
       const newCompleted = [...completedSignings, { in: pendingTransfer.in, out: pendingTransfer.out }]
       setCompletedSignings(newCompleted)
-      const updated = myPlayers
-        .filter(p => p.name !== pendingTransfer.out.name)
-        .concat({ ...pendingTransfer.in })
+      const updated = myPlayers.filter(p => p.name !== pendingTransfer.out.name).concat({ ...pendingTransfer.in })
       setMyPlayers(updated)
-
       setPendingTransfer(null)
       skipToNextSigning()
     } catch (err) {
@@ -413,7 +475,7 @@ export default function EndSeason() {
     return null
   }
 
-  if (loading) {
+  if (loading || (fromEuropa && phase === 'recap')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-gray-400 text-xl">Caricamento...</div>
@@ -423,7 +485,6 @@ export default function EndSeason() {
 
   const seasonNumber = data?.seasonNumber || 1
 
-  // Riepilogo finale
   if (phase === 'relegated' || phase === 'done') {
     const totalScore = history.reduce((sum, h) => sum + (h.finalScore || 0), 0)
     return (
@@ -439,7 +500,6 @@ export default function EndSeason() {
             </p>
           </div>
 
-          {/* Punteggio totale */}
           <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-5 text-center mb-6">
             <div className="text-gray-400 text-sm mb-1">Punteggio totale</div>
             <div className="text-5xl font-black text-green-400">{totalScore}</div>
@@ -499,7 +559,6 @@ export default function EndSeason() {
     )
   }
 
-  // Recap fine stagione
   if (phase === 'recap') {
     return (
       <div className="min-h-screen bg-gray-950 px-4 py-8">
@@ -554,18 +613,34 @@ export default function EndSeason() {
             </div>
           )}
 
-          <button
-            onClick={() => {
-              if (isRelegated || seasonNumber >= MAX_SEASONS) {
-                handleFinalRecap()
-              } else {
-                handleNextSeason()
-              }
-            }}
-            className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
-          >
-            {isRelegated || seasonNumber >= MAX_SEASONS ? 'VEDI RIEPILOGO →' : 'INIZIA MERCATO ESTIVO →'}
-          </button>
+          {/* Bottone europa OPPURE bottone mercato — mai entrambi */}
+          {europaCompetition && !isRelegated && seasonNumber <= MAX_SEASONS ? (
+            <button
+              onClick={() => navigate(`/europa-group/${sessionId}`)}
+              className={`w-full font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95 ${
+                europaCompetition === 'champions' ? 'bg-blue-600 hover:bg-blue-500 text-white' :
+                europaCompetition === 'europa' ? 'bg-orange-500 hover:bg-orange-400 text-white' :
+                'bg-green-600 hover:bg-green-500 text-white'
+              }`}
+            >
+              {europaCompetition === 'champions' ? '🏆 GIOCA LA CHAMPIONS LEAGUE' :
+               europaCompetition === 'europa' ? '🟠 GIOCA L\'EUROPA LEAGUE' :
+               '🟢 GIOCA LA CONFERENCE LEAGUE'}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (isRelegated || seasonNumber >= MAX_SEASONS) {
+                  handleFinalRecap()
+                } else {
+                  handleNextSeason()
+                }
+              }}
+              className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
+            >
+              {isRelegated || seasonNumber >= MAX_SEASONS ? 'VEDI RIEPILOGO →' : 'INIZIA MERCATO ESTIVO →'}
+            </button>
+          )}
         </div>
       </div>
     )
@@ -652,7 +727,6 @@ export default function EndSeason() {
               onResult={handleResult}
               resetKey={resetKey}
             />
-
             {showNext && (
               <button onClick={goNext} disabled={saving}
                 className="bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95">

@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
+const EUROPA_QUALS = {
+  PL: { champions: [1,2,3,4,5,6], europa: [7,8], conference: [9] },
+  SA: { champions: [1,2,3,4], europa: [5,6], conference: [7] },
+  BL: { champions: [1,2,3,4], europa: [5,6], conference: [7] },
+  LL: { champions: [1,2,3,4], europa: [5,6], conference: [7] },
+  L1: { champions: [1,2,3], europa: [4,5,6], conference: [7] },
+}
+
 export default function Results() {
   const { sessionId } = useParams()
   const navigate = useNavigate()
@@ -49,12 +57,25 @@ export default function Results() {
   const totalTeams = data.standings.length
   const teamName = session?.nickname || 'La Tua Squadra'
   const yourTeam = data.standings.find(s => s.name === 'La Tua Squadra') || {}
+  const league = session?.league || 'SA'
+  const quals = EUROPA_QUALS[league] || EUROPA_QUALS['SA']
 
   const getPositionStyle = (pos) => {
-    if (pos === 1) return { row: 'bg-yellow-500/10', border: 'border-l-4 border-yellow-400', text: 'text-yellow-400' }
-    if (pos <= 4) return { row: 'bg-blue-500/10', border: 'border-l-4 border-blue-400', text: 'text-blue-400' }
-    if (pos <= 6) return { row: 'bg-green-500/10', border: 'border-l-4 border-green-500', text: 'text-green-400' }
-    if (pos >= totalTeams - 2) return { row: 'bg-red-500/10', border: 'border-l-4 border-red-500', text: 'text-red-400' }
+    if (pos === 1) return {
+      row: 'bg-yellow-500/10', border: 'border-l-4 border-yellow-400', text: 'text-yellow-400'
+    }
+    if (quals.champions.includes(pos)) return {
+      row: 'bg-blue-500/10', border: 'border-l-4 border-blue-400', text: 'text-blue-400'
+    }
+    if (quals.europa.includes(pos)) return {
+      row: 'bg-orange-500/10', border: 'border-l-4 border-orange-400', text: 'text-orange-400'
+    }
+    if (quals.conference.includes(pos)) return {
+      row: 'bg-green-500/10', border: 'border-l-4 border-green-500', text: 'text-green-400'
+    }
+    if (pos >= totalTeams - 2) return {
+      row: 'bg-red-500/10', border: 'border-l-4 border-red-500', text: 'text-red-400'
+    }
     return { row: 'bg-gray-900', border: '', text: 'text-gray-600' }
   }
 
@@ -123,10 +144,21 @@ export default function Results() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-400 inline-block"></span> Campione</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-400 inline-block"></span> Champions League</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block"></span> Europa League</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-500 inline-block"></span> Retrocessione</span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-yellow-400 inline-block"></span> Campione
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-blue-400 inline-block"></span> Champions League
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-orange-400 inline-block"></span> Europa League
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-green-500 inline-block"></span> Conference League
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded bg-red-500 inline-block"></span> Retrocessione
+            </span>
           </div>
         </div>
 

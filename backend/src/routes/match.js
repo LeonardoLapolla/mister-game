@@ -265,7 +265,12 @@ router.post("/:sessionId/finish", async (req, res) => {
     if (!session.finished) {
       await prisma.session.update({
         where: { id: session.id },
-        data: { finalScore, finished: true },
+        data: {
+          finalScore,
+          finished: true,
+          position,        // ← questo deve esserci
+          standings: JSON.stringify(standings),
+        },
       });
 
       await prisma.leaderboardEntry.create({
