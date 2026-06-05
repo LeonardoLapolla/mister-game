@@ -223,23 +223,15 @@ function StandingsTable({ standings, title, teamName }) {
 
 export default function Season() {
   const { sessionId } = useParams()
-  useBlockBack()
-  const redirectChecked = useGameRedirect(sessionId, 'nome-pagina')
-
-  if (!redirectChecked) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="text-gray-400">Caricamento...</div>
-    </div>
-  )
   const navigate = useNavigate()
   const { session, setSession, matches, setMatches } = useGameStore()
 
+  // TUTTI gli hook prima di qualsiasi return
   const [mode, setMode] = useState(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
 
-  // Evento
   const [activeEvent, setActiveEvent] = useState(null)
   const [eventMatchesLeft, setEventMatchesLeft] = useState(0)
   const [showEventWheel, setShowEventWheel] = useState(false)
@@ -257,6 +249,9 @@ export default function Season() {
   const [showStandings, setShowStandings] = useState(false)
   const [liveStandings, setLiveStandings] = useState([])
   const [loadingStandings, setLoadingStandings] = useState(false)
+
+  useBlockBack()
+  const redirectChecked = useGameRedirect(sessionId, 'season')
 
   useEffect(() => {
     fetchSession()
@@ -445,7 +440,7 @@ export default function Season() {
     }
   }
 
-  if (loading) {
+  if (!redirectChecked || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
         <div className="text-xl animate-pulse" style={{ color: 'var(--c-muted)' }}>Caricamento...</div>
@@ -597,6 +592,8 @@ export default function Season() {
       </div>
     )
   }
+
+
 
   if (mode === 'manual' && nextMatch && !nextMatch.finished) {
     const isSecondLeg = nextMatch.next?.matchday > 20

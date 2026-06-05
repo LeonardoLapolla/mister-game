@@ -5,7 +5,6 @@ import { IconArrowRight } from '../components/Icons'
 import useBlockBack from '../hooks/useBlockBack'
 import useGameRedirect from '../hooks/useGameRedirect'
 
-
 const POSITION_COLORS = {
   GK: { bg: 'bg-yellow-500', text: 'text-yellow-900', border: 'border-yellow-400' },
   DEF: { bg: 'bg-blue-500', text: 'text-blue-900', border: 'border-blue-400' },
@@ -63,22 +62,19 @@ function PlayerDot({ player }) {
 
 export default function Squad() {
   const { sessionId } = useParams()
-  useBlockBack()
-  const redirectChecked = useGameRedirect(sessionId, 'nome-pagina')
-
-  if (!redirectChecked) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="text-gray-400">Caricamento...</div>
-    </div>
-  )
   const [searchParams] = useSearchParams()
-  const isAutoMode = searchParams.get('mode') === 'auto'
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [simulating, setSimulating] = useState(false)
   const [error, setError] = useState(null)
+
+  // Hook sempre in cima, mai dopo un return condizionale
+  useBlockBack()
+  const redirectChecked = useGameRedirect(sessionId, 'squad')
+
+  const isAutoMode = searchParams.get('mode') === 'auto'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,7 +110,8 @@ export default function Squad() {
     navigate(`/season/${sessionId}`)
   }
 
-  if (loading) {
+  // Return condizionali DOPO tutti gli hook
+  if (!redirectChecked || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
         <div className="text-xl animate-pulse" style={{ color: 'var(--c-muted)' }}>Caricamento...</div>
@@ -155,7 +152,6 @@ export default function Squad() {
           )}
         </div>
 
-        {/* Campo — aspect-ratio per evitare overflow su mobile */}
         <div
           className="relative w-full rounded-2xl overflow-hidden mb-5"
           style={{
@@ -184,7 +180,6 @@ export default function Squad() {
           </div>
         </div>
 
-        {/* Lista rosa */}
         <div className="card-base p-4 mb-5">
           <div className="grid grid-cols-2 gap-2">
             {['GK', 'DEF', 'MID', 'ATT'].map(pos => (

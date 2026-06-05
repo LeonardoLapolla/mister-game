@@ -8,20 +8,15 @@ import useGameRedirect from '../hooks/useGameRedirect'
 
 export default function Results() {
   const { sessionId } = useParams()
-  useBlockBack()
-  const redirectChecked = useGameRedirect(sessionId, 'nome-pagina')
-
-  if (!redirectChecked) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="text-gray-400">Caricamento...</div>
-    </div>
-  )
   const navigate = useNavigate()
   const { setStandings, setFinalScore, session } = useGameStore()
 
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  useBlockBack()
+  const redirectChecked = useGameRedirect(sessionId, 'results')
 
   useEffect(() => {
     fetchResults()
@@ -42,7 +37,7 @@ export default function Results() {
     }
   }
 
-  if (loading) {
+  if (!redirectChecked || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
         <div className="text-xl animate-pulse" style={{ color: 'var(--c-muted)' }}>Calcolo risultati...</div>

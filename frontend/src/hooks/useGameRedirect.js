@@ -17,46 +17,62 @@ export default function useGameRedirect(sessionId, currentPage) {
       const { session } = await res.json()
       if (!session) { navigate('/'); return }
 
+      const hasPlayers = session.players?.length > 0
+      const isFinished = session.finished
+
+      // Nessun giocatore → wheel
+      if (!hasPlayers) {
+        if (currentPage !== 'wheel') navigate(`/wheel/${sessionId}`)
+        return
+      }
+
+      // Stagione finita → results o end-season sono entrambi validi
+      if (isFinished) {
+        if (currentPage !== 'results' && currentPage !== 'end-season') {
+          navigate(`/results/${sessionId}`)
+        }
+        return
+      }
+
+      // Non finita → controlla partite
       const matchRes = await fetch(`/api/match/${sessionId}`)
       const matchData = await matchRes.json()
       const matches = matchData.matches || []
-
-      const hasPlayers = session.players?.length > 0
       const hasMatches = matches.length > 0
-      const hasUnplayed = matches.some(m => !m.played)
-      const isFinished = session.finished
 
-      const hRes = await fetch(`/api/game/${sessionId}/history`)
-      const hData = await hRes.json()
-      const hasHistory = hData.history?.length > 0
-
-      let correctPage
-      if (!hasPlayers) {
-        correctPage = 'wheel'
-      } else if (!hasMatches && !isFinished) {
-        correctPage = 'squad'
-      } else if (hasMatches && (hasUnplayed || !isFinished)) {
-        correctPage = 'season'
-      } else if (isFinished && !hasHistory) {
-        correctPage = 'results'
-      } else if (isFinished && hasHistory) {
-        correctPage = 'end-season'
-      } else {
-        correctPage = currentPage
-      }
-
-      if (correctPage !== currentPage) {
-        switch (correctPage) {
-          case 'wheel': navigate(`/wheel/${sessionId}`); break
-          case 'squad': navigate(`/squad/${sessionId}`); break
-          case 'season': navigate(`/season/${sessionId}`); break
-          case 'results': navigate(`/results/${sessionId}`); break
-          case 'end-season': navigate(`/end-season/${sessionId}`); break
+      if (!hasMatches) {
+        // Nessuna partita → squad o season vanno bene
+        if (currentPage !== 'squad' && currentPage !== 'season') {
+          navigate(`/squad/${sessionId}`)
         }
+        return
       }
+
+      const hasUnplayed = matches.some(m => !m.played)
+      const isFirstLegOnly = !hasUnplayed && matches.length <= 20
+
+      if (isFirstLegOnly) {
+        // Solo andata simulata — deve passare per squad per generare il ritorno
+        if (currentPage !== 'squad' && currentPage !== 'season') {
+          navigate(`/squad/${sessionId}`)
+        }
+        return
+      }
+
+      // Ha partite complete → season
+      if (currentPage === 'squad') {
+        const urlParams = new URLSearchParams(window.location.search)
+        const mode = urlParams.get('mode')
+        navigate(`/season/${sessionId}${mode ? `?mode=${mode}` : ''}`)
+        return
+      }
+
+      if (currentPage !== 'season') {
+        navigate(`/season/${sessionId}`)
+      }
+
     } catch (err) {
       console.error(err)
-      navigate('/')
     } finally {
       setChecked(true)
     }

@@ -165,14 +165,6 @@ function SpinWheel({ items, onResult, resetKey }) {
 
 export default function EndSeason() {
   const { sessionId } = useParams()
-  useBlockBack()
-  const redirectChecked = useGameRedirect(sessionId, 'nome-pagina')
-
-  if (!redirectChecked) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <div className="text-gray-400">Caricamento...</div>
-    </div>
-  )
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
@@ -213,6 +205,9 @@ export default function EndSeason() {
 
   const totalTeams = 21
   const isRelegated = position > totalTeams - 3
+
+  useBlockBack()
+  const redirectChecked = useGameRedirect(sessionId, 'end-season')
 
   useEffect(() => {
     fetchData()
@@ -429,7 +424,7 @@ export default function EndSeason() {
     return null
   }
 
-  if (loading) {
+  if (!redirectChecked || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--c-bg)' }}>
         <div className="text-xl animate-pulse" style={{ color: 'var(--c-muted)' }}>Caricamento...</div>
