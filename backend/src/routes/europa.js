@@ -49,10 +49,12 @@ router.post("/:sessionId/generate-group", async (req, res) => {
     const teams = buildEuropaGroup(competition, session.league, leagueTeams, session.position);
     const standings = simulateEuropaGroup(teams, avgRating);
 
-    const opponents = standings.filter(s => !s.isPlayer).map(s => ({
-      name: s.name,
-      rating: s.rating,
-    }));
+    const opponents = standings
+      .filter(s => !s.isPlayer && s.name !== 'La Tua Squadra')
+      .map(s => ({
+        name: s.name,
+        rating: s.rating,
+    }))
 
     // Simula automaticamente tutte le partite del giocatore
     const playerMatches = opponents.map((opp, i) => {
@@ -438,6 +440,7 @@ function generateKnockoutBracket(qualifiedTeams) {
       homeRating: home.rating,
       awayRating: away.rating,
       isPlayerMatch,
+      opponentName: opponent.name,
       opponentRating: opponent.rating,
       played: false,
       winner: null,
@@ -494,6 +497,7 @@ function generateNextRoundMatches(europaData, nextRound) {
       homeRating: rating1,
       awayRating: rating2,
       isPlayerMatch,
+      opponentName: opponent,
       opponentRating,
       played: false,
       winner: null,

@@ -147,7 +147,7 @@ export default function EuropaKnockout() {
   const [lastResult, setLastResult] = useState(null)
   const [locked, setLocked] = useState(false)
   const [error, setError] = useState(null)
-  const [phase, setPhase] = useState('playing') // playing | eliminated | winner
+  const [phase, setPhase] = useState('playing')
 
   useEffect(() => {
     init()
@@ -171,27 +171,15 @@ export default function EuropaKnockout() {
     const stateData = await stateRes.json()
     setEuropaState(stateData)
 
-    if (stateData.phase === 'eliminated') {
-      setPhase('eliminated')
-      return
-    }
-    if (stateData.phase === 'winner') {
-      setPhase('winner')
-      return
-    }
-
+    if (stateData.phase === 'eliminated') { setPhase('eliminated'); return }
+    if (stateData.phase === 'winner') { setPhase('winner'); return }
     await fetchNextMatch()
   }
 
   const fetchNextMatch = async () => {
     const res = await fetch(`/api/europa/${sessionId}/next-knockout-match`)
     const data = await res.json()
-
-    if (data.finished) {
-      setPhase('winner')
-      return
-    }
-
+    if (data.finished) { setPhase('winner'); return }
     setNextMatch(data.match)
     setProbs(data.probs)
     setLocked(false)
@@ -208,11 +196,16 @@ export default function EuropaKnockout() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
+      // Calcola il nome avversario corretto
+      const opponentName = nextMatch?.opponentName ||
+        (nextMatch?.home === 'La Tua Squadra' ? nextMatch?.away : nextMatch?.home) ||
+        nextMatch?.away
+
       setLastResult({
         outcome: data.result,
         goalsFor: data.goalsFor,
         goalsAgainst: data.goalsAgainst,
-        opponent: nextMatch.opponent || nextMatch.away,
+        opponent: opponentName,
         eliminated: data.eliminated,
         nextRound: data.nextRound,
       })
@@ -234,6 +227,15 @@ export default function EuropaKnockout() {
     }
   }
 
+  const handleContinue = async () => {
+    const sessionRes = await fetch(`/api/game/${sessionId}`)
+    const sessionData = await sessionRes.json()
+    const pos = sessionData.session.position || 0
+    const scoreRes = await fetch(`/api/europa/${sessionId}/score`)
+    const scoreData = await scoreRes.json()
+    navigate(`/end-season/${sessionId}?fromEuropa=true&position=${pos}&score=${scoreData.score || 0}`)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
@@ -247,23 +249,16 @@ export default function EuropaKnockout() {
   const teamName = session?.nickname || 'La Tua Squadra'
   const currentRound = europaState?.knockoutRound
   const roundLabel = ROUND_LABELS[currentRound] || currentRound
-
-  // Partite del round corrente
-  const currentRoundMatches = europaState?.knockoutMatches?.filter(
-    m => m.round === currentRound
-  ) || []
+  const currentRoundMatches = europaState?.knockoutMatches?.filter(m => m.round === currentRound) || []
 
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-8">
       <div className="max-w-lg mx-auto">
 
-        {/* Header */}
         <div className="text-center mb-6">
           <div className="text-5xl mb-2">{info.emoji}</div>
           <h1 className="text-3xl font-black text-white">{info.name}</h1>
-          {phase === 'playing' && (
-            <p className="text-blue-400 font-bold mt-1">{roundLabel}</p>
-          )}
+          {phase === 'playing' && <p className="text-blue-400 font-bold mt-1">{roundLabel}</p>}
           <p className="text-gray-500 text-sm mt-1">{teamName}</p>
         </div>
 
@@ -292,17 +287,16 @@ export default function EuropaKnockout() {
           </div>
         )}
 
-        {/* Fase eliminazione — prossima partita */}
+        {/* Prossima partita */}
         {phase === 'playing' && nextMatch && !lastResult && (
           <>
             <div className="bg-gray-900 rounded-2xl p-4 mb-4 border border-gray-800">
-              <div className="text-gray-500 text-xs uppercase tracking-wider mb-2">
-                {roundLabel}
-              </div>
+              <div className="text-gray-500 text-xs uppercase tracking-wider mb-2">{roundLabel}</div>
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <div className="text-white font-black text-xl">
-                    {nextMatch.opponent || nextMatch.away}
+                    {nextMatch.opponentName ||
+                     (nextMatch.home === 'La Tua Squadra' ? nextMatch.away : nextMatch.home)}
                   </div>
                   <div className="text-gray-500 text-sm">
                     Rating {nextMatch.opponentRating} · Eliminazione diretta
@@ -343,7 +337,7 @@ export default function EuropaKnockout() {
           </>
         )}
 
-        {/* Tabellone round corrente */}
+        {/* Tabellone */}
         {currentRoundMatches.length > 0 && phase === 'playing' && (
           <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-4">
             <h2 className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">
@@ -352,23 +346,26 @@ export default function EuropaKnockout() {
             <div className="space-y-2">
               {currentRoundMatches.map((match, i) => {
                 const isPlayerMatch = match.isPlayerMatch
+                const displayHome = match.home === 'La Tua Squadra' ? `⭐ ${teamName}` : match.home
+                const displayAway = match.away === 'La Tua Squadra' ? `⭐ ${teamName}` : match.away
                 return (
                   <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-lg ${
                     isPlayerMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-gray-800'
                   }`}>
                     <div className="flex items-center gap-2 text-sm">
-                      <span className={isPlayerMatch ? 'text-green-400 font-bold' : 'text-gray-300'}>
-                        {isPlayerMatch ? `⭐ ${teamName}` : match.home}
+                      <span className={match.home === 'La Tua Squadra' ? 'text-green-400 font-bold' : 'text-gray-300'}>
+                        {displayHome}
                       </span>
                       <span className="text-gray-600">vs</span>
-                      <span className="text-gray-300">{match.away}</span>
+                      <span className={match.away === 'La Tua Squadra' ? 'text-green-400 font-bold' : 'text-gray-300'}>
+                        {displayAway}
+                      </span>
                     </div>
-                    {match.played && (
+                    {match.played ? (
                       <span className="text-xs font-bold text-gray-500">
                         {match.goalsFor ?? '?'} - {match.goalsAgainst ?? '?'}
                       </span>
-                    )}
-                    {!match.played && (
+                    ) : (
                       <span className="text-xs text-gray-600">Da giocare</span>
                     )}
                   </div>
@@ -385,14 +382,14 @@ export default function EuropaKnockout() {
               <div className="text-4xl mb-2">💀</div>
               <div className="text-red-400 font-black text-xl">Eliminato!</div>
               <div className="text-gray-400 text-sm mt-1">
-                Sei uscito {ROUND_LABELS[europaState?.finalRound] || 'dalla competizione'}
+                Sei uscito agli {ROUND_LABELS[europaState?.finalRound] || 'dalla competizione'}
               </div>
               <div className="text-green-400 font-bold text-lg mt-3">
                 +{europaState?.europaScore || 0} punti bonus
               </div>
             </div>
             <button
-              onClick={() => navigate(`/end-season/${sessionId}`)}
+              onClick={handleContinue}
               className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all"
             >
               CONTINUA →
@@ -412,18 +409,11 @@ export default function EuropaKnockout() {
               </div>
             </div>
             <button
-                onClick={async () => {
-                    const sessionRes = await fetch(`/api/game/${sessionId}`)
-                    const sessionData = await sessionRes.json()
-                    const pos = sessionData.session.position || 0
-                    const scoreRes = await fetch(`/api/europa/${sessionId}/score`)
-                    const scoreData = await scoreRes.json()
-                    navigate(`/end-season/${sessionId}?fromEuropa=true&position=${pos}&score=${scoreData.score || 0}`)
-                }}
-                className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all"
-                >
-                CONTINUA →
-                </button>
+              onClick={handleContinue}
+              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xl py-4 rounded-2xl transition-all"
+            >
+              CONTINUA →
+            </button>
           </div>
         )}
 

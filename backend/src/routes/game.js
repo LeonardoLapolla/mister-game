@@ -107,6 +107,7 @@ router.post("/:id/next-season", async (req, res) => {
         finalScore: null,
         calendarData: null,
         budgetSpent: 0,
+        europaData: null,
       }
     });
 
