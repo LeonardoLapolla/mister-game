@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import useBlockBack from '../hooks/useBlockBack'
+import usePageGuard from '../hooks/usePageGuard'
 
 const LEAGUES = [
   { code: 'PL', name: 'Premier League', country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
@@ -154,6 +156,8 @@ export default function EndSeason() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
+  useBlockBack()
+  const guardPassed = usePageGuard(sessionId, s => !s.finished ? `/squad/${sessionId}` : null)
 
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
@@ -180,15 +184,12 @@ export default function EndSeason() {
   const [completedSignings, setCompletedSignings] = useState([])
   const [myPlayers, setMyPlayers] = useState([])
   const [saving, setSaving] = useState(false)
+  const [europaCheckLoading, setEuropaCheckLoading] = useState(true)
+
+  // Guard: prevent handleNextSeason/handleFinalRecap from being called more than once
+  const nextSeasonCalledRef = useRef(false)
 
   const position = parseInt(searchParams.get('position')) || 10
-  const points = parseInt(searchParams.get('points')) || 0
-  const wins = parseInt(searchParams.get('wins')) || 0
-  const draws = parseInt(searchParams.get('draws')) || 0
-  const losses = parseInt(searchParams.get('losses')) || 0
-  const goalsFor = parseInt(searchParams.get('gf')) || 0
-  const goalsAgainst = parseInt(searchParams.get('ga')) || 0
-  const score = parseInt(searchParams.get('score')) || 0
   const fromEuropa = searchParams.get('fromEuropa') === 'true'
 
   const totalTeams = 21
@@ -207,9 +208,11 @@ export default function EndSeason() {
     }
   }, [wheelItems, pendingStep])
 
-  // Se arriva da europa, vai direttamente al mercato
+  // Se arriva da europa, vai direttamente al mercato (una volta sola)
   useEffect(() => {
     if (fromEuropa && !loading && data) {
+      if (nextSeasonCalledRef.current) return
+      nextSeasonCalledRef.current = true
       const seasonNumber = data?.seasonNumber || 1
       if (isRelegated || seasonNumber > MAX_SEASONS) {
         handleFinalRecap()
@@ -243,28 +246,33 @@ export default function EndSeason() {
   }
 
   useEffect(() => {
-  if (position && data) {
-    // Controlla prima se c'è già un torneo giocato
-    fetch(`/api/europa/${sessionId}/state`)
-      .then(r => {
-        if (!r.ok) {
-          // Nessun torneo — controlla se è qualificato
-          return fetch(`/api/europa/${sessionId}/check`)
-            .then(r2 => r2.json())
-            .then(d => setEuropaCompetition(d.competition))
-        }
-        return r.json().then(d => {
-          // Torneo già giocato (fase eliminated o winner) — non mostrare il bottone
-          if (d.phase === 'eliminated' || d.phase === 'winner') {
-            setEuropaCompetition(null)
-          } else {
-            setEuropaCompetition(d.competition)
+    if (position && data) {
+      // Se stiamo arrivando da europa, non serve controllare: il bottone non sarà visibile
+      if (fromEuropa) { setEuropaCheckLoading(false); return }
+      setEuropaCheckLoading(true)
+      // Controlla prima se c'è già un torneo giocato per questa stagione
+      fetch(`/api/europa/${sessionId}/state`)
+        .then(r => {
+          if (!r.ok) {
+            // Nessun torneo — controlla se è qualificato usando la posizione corrente
+            return fetch(`/api/europa/${sessionId}/check?position=${position}`)
+              .then(r2 => r2.json())
+              .then(d => setEuropaCompetition(d.competition))
           }
+          return r.json().then(d => {
+            // Torneo già giocato (fase eliminated o winner) — non mostrare il bottone
+            if (d.phase === 'eliminated' || d.phase === 'winner') {
+              setEuropaCompetition(null)
+            } else {
+              // Torneo in corso (non ancora completato) — mostra il bottone
+              setEuropaCompetition(d.competition)
+            }
+          })
         })
-      })
-      .catch(() => {})
-  }
-}, [position, data])
+        .catch(() => setEuropaCompetition(null))
+        .finally(() => setEuropaCheckLoading(false))
+    }
+  }, [position, data])
 
   const handleNextSeason = async () => {
     let europaScore = 0
@@ -274,23 +282,22 @@ export default function EndSeason() {
       europaScore = europaData.score || 0
     } catch (err) {}
 
-    const totalScore = score + europaScore
+    // Use session's finalScore (set by /finish) as the season score.
+    // This avoids double-counting when coming back from Europa where the URL
+    // score param already IS the europa score.
+    const seasonScore = data?.finalScore || 0
+    const totalScore = seasonScore + europaScore
 
     const res = await fetch(`/api/game/${sessionId}/next-season`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        position, points, wins, draws, losses, goalsFor, goalsAgainst,
-        finalScore: totalScore,
-      }),
+      body: JSON.stringify({ position, finalScore: totalScore }),
     })
     const d = await res.json()
 
     if (d.relegated) { setPhase('relegated'); return }
 
     if (d.maxSeasons) {
-      // Ultima stagione — se viene da europa vai al riepilogo finale
-      // ricarica history aggiornata poi mostra done
       const hRes = await fetch(`/api/game/${sessionId}/history`)
       const hData = await hRes.json()
       setHistory(hData.history || [])
@@ -310,15 +317,13 @@ export default function EndSeason() {
       europaScore = europaData.score || 0
     } catch (err) {}
 
-    const totalScore = score + europaScore
+    const seasonScore = data?.finalScore || 0
+    const totalScore = seasonScore + europaScore
 
     await fetch(`/api/game/${sessionId}/next-season`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        position, points, wins, draws, losses, goalsFor, goalsAgainst,
-        finalScore: totalScore,
-      }),
+      body: JSON.stringify({ position, finalScore: totalScore }),
     })
 
     const hRes = await fetch(`/api/game/${sessionId}/history`)
@@ -475,7 +480,7 @@ export default function EndSeason() {
     return null
   }
 
-  if (loading || (fromEuropa && phase === 'recap')) {
+  if (!guardPassed || loading || (fromEuropa && phase === 'recap')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-gray-400 text-xl">Caricamento...</div>
@@ -614,7 +619,12 @@ export default function EndSeason() {
           )}
 
           {/* Bottone europa OPPURE bottone mercato — mai entrambi */}
-          {europaCompetition && !isRelegated && seasonNumber <= MAX_SEASONS ? (
+          {/* europaCheckLoading: aspetta la verifica qualificazione prima di mostrare i bottoni */}
+          {europaCheckLoading && !isRelegated && seasonNumber < MAX_SEASONS ? (
+            <div className="w-full py-4 rounded-2xl bg-gray-800 text-gray-500 font-black text-xl text-center animate-pulse">
+              Verifica qualificazioni...
+            </div>
+          ) : europaCompetition && !isRelegated && seasonNumber <= MAX_SEASONS ? (
             <button
               onClick={() => navigate(`/europa-group/${sessionId}`)}
               className={`w-full font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95 ${
@@ -630,6 +640,8 @@ export default function EndSeason() {
           ) : (
             <button
               onClick={() => {
+                if (nextSeasonCalledRef.current) return
+                nextSeasonCalledRef.current = true
                 if (isRelegated || seasonNumber >= MAX_SEASONS) {
                   handleFinalRecap()
                 } else {

@@ -158,6 +158,27 @@ export default function EuropaKnockout() {
       const res = await fetch(`/api/game/${sessionId}`)
       const data = await res.json()
       setSession(data.session)
+
+      // Guard: redirect if session not in valid state for this page
+      if (!data.session?.finished) {
+        navigate(`/end-season/${sessionId}`, { replace: true })
+        return
+      }
+      if (!data.session?.europaData) {
+        navigate(`/end-season/${sessionId}`, { replace: true })
+        return
+      }
+      try {
+        const ed = JSON.parse(data.session.europaData)
+        if (ed.phase !== 'knockout') {
+          navigate(`/end-season/${sessionId}`, { replace: true })
+          return
+        }
+      } catch {
+        navigate(`/end-season/${sessionId}`, { replace: true })
+        return
+      }
+
       await refreshState()
     } catch (err) {
       setError(err.message)

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import useBlockBack from '../hooks/useBlockBack'
+import usePageGuard from '../hooks/usePageGuard'
 
 const EVENTS = [
   { id: 'hot_striker', emoji: '🔥', text: 'Il tuo bomber è in forma smagliante!', type: 'bonus', win: +7, draw: 0, loss: 0 },
@@ -208,6 +210,8 @@ export default function Season() {
   const { sessionId } = useParams()
   const navigate = useNavigate()
   const { session, setSession, matches, setMatches } = useGameStore()
+  useBlockBack()
+  const guardPassed = usePageGuard(sessionId, s => s.finished ? `/results/${sessionId}` : null)
 
   const [mode, setMode] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -420,7 +424,7 @@ export default function Season() {
     }
   }
 
-  if (loading) {
+  if (!guardPassed || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-gray-400 text-xl">Caricamento...</div>

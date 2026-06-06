@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import useBlockBack from '../hooks/useBlockBack'
+import usePageGuard from '../hooks/usePageGuard'
 
 const POSITION_COLORS = {
   GK: { bg: 'bg-yellow-500', text: 'text-yellow-900', border: 'border-yellow-400' },
@@ -62,6 +64,8 @@ export default function Squad() {
   const isAutoMode = searchParams.get('mode') === 'auto'
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
+  useBlockBack()
+  const guardPassed = usePageGuard(sessionId, s => s.finished ? `/results/${sessionId}` : null)
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [simulating, setSimulating] = useState(false)
@@ -101,7 +105,7 @@ export default function Squad() {
     navigate(`/season/${sessionId}`)
   }
 
-  if (loading) {
+  if (!guardPassed || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-gray-400 text-xl">Caricamento...</div>

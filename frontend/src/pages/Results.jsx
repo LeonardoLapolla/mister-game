@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import useBlockBack from '../hooks/useBlockBack'
+import usePageGuard from '../hooks/usePageGuard'
 
 const EUROPA_QUALS = {
   PL: { champions: [1,2,3,4,5,6], europa: [7,8], conference: [9] },
@@ -14,6 +16,8 @@ export default function Results() {
   const { sessionId } = useParams()
   const navigate = useNavigate()
   const { setStandings, setFinalScore, session } = useGameStore()
+  useBlockBack()
+  const guardPassed = usePageGuard(sessionId, s => !s.finished ? `/season/${sessionId}` : null)
 
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -38,7 +42,7 @@ export default function Results() {
     }
   }
 
-  if (loading) {
+  if (!guardPassed || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-gray-400 text-xl">Calcolo risultati...</div>

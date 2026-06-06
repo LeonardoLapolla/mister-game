@@ -30,6 +30,25 @@ export default function EuropaGroup() {
       const data = await res.json()
       setSession(data.session)
 
+      // Guard: redirect if session not in valid state for this page
+      if (!data.session?.finished) {
+        navigate(`/end-season/${sessionId}`, { replace: true })
+        return
+      }
+      if (data.session?.europaData) {
+        try {
+          const ed = JSON.parse(data.session.europaData)
+          if (ed.phase === 'eliminated' || ed.phase === 'winner') {
+            navigate(`/end-season/${sessionId}`, { replace: true })
+            return
+          }
+          if (ed.phase === 'knockout') {
+            navigate(`/europa-knockout/${sessionId}`, { replace: true })
+            return
+          }
+        } catch {}
+      }
+
       // Genera il girone (simula tutto automaticamente)
       const groupRes = await fetch(`/api/europa/${sessionId}/generate-group`, { method: 'POST' })
       const groupData = await groupRes.json()

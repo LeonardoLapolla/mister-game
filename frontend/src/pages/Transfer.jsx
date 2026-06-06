@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
+import useBlockBack from '../hooks/useBlockBack'
+import usePageGuard from '../hooks/usePageGuard'
 
 const LEAGUES = [
   { code: 'PL', name: 'Premier League', country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
@@ -156,6 +158,8 @@ export default function Transfer() {
   const isAutoMode = searchParams.get('mode') === 'auto'
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
+  useBlockBack()
+  const guardPassed = usePageGuard(sessionId, s => s.finished ? `/results/${sessionId}` : null)
 
   const [step, setStep] = useState('yesno')
   const [result, setResult] = useState(null)
@@ -359,7 +363,7 @@ export default function Transfer() {
     }
   }
 
-  if (loading) {
+  if (!guardPassed || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-gray-400 text-xl">Caricamento...</div>
