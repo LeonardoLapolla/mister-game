@@ -15,8 +15,10 @@ router.get("/:sessionId/check", async (req, res) => {
       where: { id: req.params.sessionId },
     });
     if (!session) return res.status(404).json({ error: "Sessione non trovata" });
-    const competition = getEuropaCompetition(session.position, session.league);
-    res.json({ competition, position: session.position });
+    // Accept explicit position from query param (more reliable than session.position)
+    const pos = parseInt(req.query.position) || session.position || 0;
+    const competition = getEuropaCompetition(pos, session.league);
+    res.json({ competition, position: pos });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Errore nel controllo qualificazione" });

@@ -60,7 +60,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/:id/next-season", async (req, res) => {
   try {
-    const { position, points, wins, draws, losses, goalsFor, goalsAgainst, finalScore } = req.body;
+    const { position: bodyPosition, finalScore } = req.body;
 
     const session = await prisma.session.findUnique({
       where: { id: req.params.id },
@@ -69,11 +69,23 @@ router.post("/:id/next-season", async (req, res) => {
 
     if (!session) return res.status(404).json({ error: "Sessione non trovata" });
 
+    // Use position from body, fallback to stored session position
+    const finalPosition = bodyPosition || session.position || 0;
+
+    // Compute stats from actual played matches (avoids relying on frontend params)
+    const played = session.matches.filter(m => m.played);
+    const wins = played.filter(m => m.goalsFor > m.goalsAgainst).length;
+    const draws = played.filter(m => m.goalsFor === m.goalsAgainst).length;
+    const losses = played.filter(m => m.goalsFor < m.goalsAgainst).length;
+    const points = wins * 3 + draws;
+    const goalsFor = played.reduce((s, m) => s + m.goalsFor, 0);
+    const goalsAgainst = played.reduce((s, m) => s + m.goalsAgainst, 0);
+
     await prisma.seasonHistory.create({
       data: {
         sessionId: session.id,
         seasonNumber: session.seasonNumber,
-        position,
+        position: finalPosition,
         points,
         wins,
         draws,
@@ -85,7 +97,7 @@ router.post("/:id/next-season", async (req, res) => {
     });
 
     const totalTeams = leagues[session.league].teams.length;
-    const isRelegated = position > totalTeams - 3;
+    const isRelegated = finalPosition > totalTeams - 3;
 
     if (isRelegated) {
       return res.json({ relegated: true });
