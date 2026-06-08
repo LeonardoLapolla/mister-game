@@ -11,7 +11,7 @@ import EuropaKnockout from './pages/EuropaKnockout'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/wheel" element={<Wheel />} />

@@ -174,6 +174,7 @@ router.get("/:sessionId/next-match", async (req, res) => {
       halfTime: false,
       next: nextMatch,
       yourStrength,
+      opponentStrength,
       probs,
       playedCount,
       totalMatches,
@@ -405,6 +406,13 @@ router.post("/:sessionId/generate-second-leg", async (req, res) => {
     if (!session) return res.status(404).json({ error: "Sessione non trovata" });
 
     const leagueTeams = leagues[session.league].teams;
+
+    // Idempotency guard: return early if second leg already exists
+    const existingSecondLeg = session.matches.filter(m => m.matchday > leagueTeams.length);
+    if (existingSecondLeg.length > 0) {
+      return res.json({ message: "Ritorno già simulato", totalMatches: existingSecondLeg.length });
+    }
+
     const calendarData = JSON.parse(session.calendarData);
     const simulatedRounds = calendarData.simulatedRounds || [];
 
@@ -428,8 +436,8 @@ router.post("/:sessionId/generate-second-leg", async (req, res) => {
       const diff = yourStrength - opponentStrength;
       const absDiff = Math.abs(diff);
 
-      const drawChance = Math.max(0.10, 0.28 - absDiff * 0.008);
-      const winChance = Math.min(0.75, Math.max(0.15, 0.5 + diff * 0.015));
+      const drawChance = Math.max(0.08, 0.22 - absDiff * 0.006);
+      const winChance = Math.min(0.80, Math.max(0.08, 0.5 + diff * 0.025));
 
       const r = Math.random();
       let goalsFor, goalsAgainst;

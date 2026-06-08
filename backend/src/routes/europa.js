@@ -49,17 +49,10 @@ router.post("/:sessionId/generate-group", async (req, res) => {
       : 75;
 
     const teams = buildEuropaGroup(competition, session.league, leagueTeams, session.position);
-    const standings = simulateEuropaGroup(teams, avgRating);
+    const { standings, playerOpponents } = simulateEuropaGroup(teams, avgRating);
 
-    const opponents = standings
-      .filter(s => !s.isPlayer && s.name !== 'La Tua Squadra')
-      .map(s => ({
-        name: s.name,
-        rating: s.rating,
-    }))
-
-    // Simula automaticamente tutte le partite del giocatore
-    const playerMatches = opponents.map((opp, i) => {
+    // Simula automaticamente le 10 partite del giocatore (avversarie assegnate casualmente)
+    const playerMatches = playerOpponents.map((opp, i) => {
       const homeGame = i % 2 === 0;
       const opponentStr = homeGame ? opp.rating : opp.rating + 3;
       const diff = avgRating - opponentStr;

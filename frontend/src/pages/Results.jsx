@@ -23,9 +23,7 @@ export default function Results() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    fetchResults()
-  }, [sessionId])
+  useEffect(() => { fetchResults() }, [sessionId])
 
   const fetchResults = async () => {
     try {
@@ -43,19 +41,11 @@ export default function Results() {
   }
 
   if (!guardPassed || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-gray-400 text-xl">Calcolo risultati...</div>
-      </div>
-    )
+    return <div className="mister-loading"><div>Calcolo risultati...</div></div>
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-red-400 text-xl">{error}</div>
-      </div>
-    )
+    return <div className="mister-loading" style={{ color: 'var(--loss)' }}><div>{error}</div></div>
   }
 
   const totalTeams = data.standings.length
@@ -64,23 +54,13 @@ export default function Results() {
   const league = session?.league || 'SA'
   const quals = EUROPA_QUALS[league] || EUROPA_QUALS['SA']
 
-  const getPositionStyle = (pos) => {
-    if (pos === 1) return {
-      row: 'bg-yellow-500/10', border: 'border-l-4 border-yellow-400', text: 'text-yellow-400'
-    }
-    if (quals.champions.includes(pos)) return {
-      row: 'bg-blue-500/10', border: 'border-l-4 border-blue-400', text: 'text-blue-400'
-    }
-    if (quals.europa.includes(pos)) return {
-      row: 'bg-orange-500/10', border: 'border-l-4 border-orange-400', text: 'text-orange-400'
-    }
-    if (quals.conference.includes(pos)) return {
-      row: 'bg-green-500/10', border: 'border-l-4 border-green-500', text: 'text-green-400'
-    }
-    if (pos >= totalTeams - 2) return {
-      row: 'bg-red-500/10', border: 'border-l-4 border-red-500', text: 'text-red-400'
-    }
-    return { row: 'bg-gray-900', border: '', text: 'text-gray-600' }
+  const getZone = (pos) => {
+    if (pos === 1) return 'ch'
+    if (quals.champions.includes(pos)) return 'ch'
+    if (quals.europa.includes(pos)) return 'el'
+    if (quals.conference.includes(pos)) return 'co'
+    if (pos >= totalTeams - 2) return 'rel'
+    return ''
   }
 
   const handleContinue = () => {
@@ -98,80 +78,58 @@ export default function Results() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-
-        <div className="text-center mb-12">
-          <div className="text-7xl mb-4">
-            {data.position === 1 ? '🏆' :
-             data.position === 2 ? '🥈' :
-             data.position === 3 ? '🥉' :
-             data.position <= 6 ? '⭐' : '📊'}
+    <div className="mister-page">
+      <div className="page-scroll" style={{ flex: 1 }}>
+        {/* Finish card */}
+        <div className="finish-card" style={{ marginTop: 24 }}>
+          <div className="finish-pos">{data.position}°</div>
+          <div className="finish-info">
+            <b>{data.label}</b>
+            <span>{teamName}</span>
           </div>
-          <h1 className="text-5xl font-black text-white mb-1">{data.label}</h1>
-          <p className="text-gray-400 mb-2 text-lg">{teamName}</p>
-          <p className="text-gray-500 mb-6">{data.position}° posto in classifica</p>
-          <div className="inline-block bg-green-500/10 border border-green-500/30 rounded-2xl px-8 py-4">
-            <div className="text-5xl font-black text-green-400">{data.finalScore}</div>
-            <div className="text-gray-500 text-sm mt-1">punti stagione</div>
+          <div className="finish-score">
+            <span>Punteggio stagione</span>
+            <b>{data.finalScore}</b>
           </div>
         </div>
 
-        <div className="mb-10">
-          <h2 className="text-xl font-black text-white mb-4">Classifica finale</h2>
-          <div className="space-y-1">
-            {data.standings.map((team, i) => {
-              const isYou = team.name === 'La Tua Squadra'
-              const pos = i + 1
-              const style = getPositionStyle(pos)
-              return (
-                <div
-                  key={team.name}
-                  className={`flex items-center justify-between px-4 py-2 rounded-xl ${style.row} ${style.border} ${isYou ? 'ring-1 ring-white/20' : ''}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`text-sm font-black w-6 ${style.text}`}>{pos}</span>
-                    <span className="font-semibold text-sm text-white">
-                      {isYou ? `⭐ ${teamName}` : team.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-gray-500">{team.w}V {team.d}P {team.l}S</span>
-                    <span className="text-gray-500">{team.gf}:{team.ga}</span>
-                    <span className={`font-black ${style.text === 'text-gray-600' ? 'text-white' : style.text}`}>
-                      {team.pts} pt
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-yellow-400 inline-block"></span> Campione
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-blue-400 inline-block"></span> Champions League
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-orange-400 inline-block"></span> Europa League
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-green-500 inline-block"></span> Conference League
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded bg-red-500 inline-block"></span> Retrocessione
-            </span>
-          </div>
+        {/* Standings */}
+        <div className="section-title">Classifica finale</div>
+        <div className="std">
+          <div className="std-h"><span>#</span><span>Squadra</span><span>V</span><span>P</span><span>S</span><span>Pt</span></div>
+          {data.standings.map((team, i) => {
+            const isYou = team.name === 'La Tua Squadra'
+            const pos = i + 1
+            const zone = getZone(pos)
+            return (
+              <div key={team.name} className={`std-row ${zone} ${isYou ? 'you' : ''}`}>
+                <span className="sz" />
+                <span className="spos">{pos}</span>
+                <span className="stm">
+                  <span className="smc" style={isYou ? { background: 'var(--primary)' } : {}} />
+                  {isYou ? teamName : team.name}
+                </span>
+                <span className="sg">{team.w || 0}</span>
+                <span className="sg">{team.d || 0}</span>
+                <span className="sg">{team.l || 0}</span>
+                <span className="spt">{team.pts}</span>
+              </div>
+            )
+          })}
         </div>
 
-        <button
-          onClick={handleContinue}
-          className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
-        >
-          CONTINUA →
-        </button>
+        <div className="std-legend">
+          <span><i style={{ background: 'var(--champions)' }} />Champions</span>
+          <span><i style={{ background: 'var(--europa)' }} />Europa</span>
+          <span><i style={{ background: 'var(--conference)' }} />Conference</span>
+          <span><i style={{ background: 'var(--loss)' }} />Retroc.</span>
+        </div>
+
+        <div style={{ height: 100 }} />
+      </div>
+
+      <div className="screen-foot">
+        <button onClick={handleContinue} className="btn primary">CONTINUA ▶</button>
       </div>
     </div>
   )

@@ -3,10 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 import useBlockBack from '../hooks/useBlockBack'
 
-const COMPETITION_INFO = {
-  champions: { name: 'Champions League', emoji: '🏆', color: '#1a56db' },
-  europa: { name: 'Europa League', emoji: '🟠', color: '#f97316' },
-  conference: { name: 'Conference League', emoji: '🟢', color: '#22c55e' },
+const COMP_THEME = {
+  champions: 'theme-champions',
+  europa: 'theme-europa',
+  conference: 'theme-conference',
+}
+
+const COMP_INFO = {
+  champions: { name: 'Champions League', label: 'UEFA Champions League' },
+  europa: { name: 'Europa League', label: 'UEFA Europa League' },
+  conference: { name: 'Conference League', label: 'UEFA Conference League' },
 }
 
 const ROUND_LABELS = {
@@ -16,6 +22,8 @@ const ROUND_LABELS = {
   Final: 'Finale',
 }
 
+const SEG_COLORS_MATCH = { win: '#16C784', draw: '#F5B43C', loss: '#FB5566' }
+
 function MatchWheel({ probs, onResult, locked, onLock }) {
   const canvasRef = useRef(null)
   const angleRef = useRef(0)
@@ -23,17 +31,17 @@ function MatchWheel({ probs, onResult, locked, onLock }) {
   const [spinning, setSpinning] = useState(false)
 
   const items = [
-    { label: 'VITTORIA', result: 'win', color: '#22c55e', prob: probs.win },
-    { label: 'PAREGGIO', result: 'draw', color: '#f59e0b', prob: probs.draw },
-    { label: 'SCONFITTA', result: 'loss', color: '#ef4444', prob: probs.loss },
+    { label: 'VITTORIA', result: 'win', color: SEG_COLORS_MATCH.win, prob: probs.win },
+    { label: 'PAREGGIO', result: 'draw', color: SEG_COLORS_MATCH.draw, prob: probs.draw },
+    { label: 'SCONFITTA', result: 'loss', color: SEG_COLORS_MATCH.loss, prob: probs.loss },
   ]
 
   useEffect(() => { drawWheel(angleRef.current) }, [probs])
 
   useEffect(() => {
-    const handleKey = (e) => { if (e.code === 'Space') { e.preventDefault(); spin() } }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
+    const h = (e) => { if (e.code === 'Space') { e.preventDefault(); spin() } }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
   }, [spinning, locked])
 
   function drawWheel(angle) {
@@ -41,95 +49,72 @@ function MatchWheel({ probs, onResult, locked, onLock }) {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const W = canvas.width, H = canvas.height
-    const cx = W / 2, cy = H / 2
-    const R = Math.min(W, H) / 2 - 8
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 8
     ctx.clearRect(0, 0, W, H)
-    let startAngle = angle
+    let sa = angle
     for (const item of items) {
       const arc = (item.prob / 100) * 2 * Math.PI
-      ctx.beginPath()
-      ctx.moveTo(cx, cy)
-      ctx.arc(cx, cy, R, startAngle, startAngle + arc)
-      ctx.closePath()
-      ctx.fillStyle = item.color
-      ctx.fill()
-      ctx.strokeStyle = '#111827'
-      ctx.lineWidth = 2
-      ctx.stroke()
-      ctx.save()
-      ctx.translate(cx, cy)
-      ctx.rotate(startAngle + arc / 2)
-      ctx.textAlign = 'right'
-      ctx.fillStyle = '#fff'
-      ctx.font = 'bold 13px monospace'
-      ctx.shadowColor = 'rgba(0,0,0,0.8)'
-      ctx.shadowBlur = 4
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, sa, sa + arc); ctx.closePath()
+      ctx.fillStyle = item.color; ctx.fill()
+      ctx.strokeStyle = 'rgba(4,7,10,.6)'; ctx.lineWidth = 1.5; ctx.stroke()
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(sa + arc / 2)
+      ctx.textAlign = 'right'; ctx.fillStyle = '#04130D'
+      ctx.font = "bold 12px 'Saira Condensed', monospace"
       ctx.fillText(`${item.label} ${item.prob}%`, R - 10, 5)
       ctx.restore()
-      startAngle += arc
+      sa += arc
     }
-    ctx.beginPath()
-    ctx.arc(cx, cy, 18, 0, 2 * Math.PI)
-    ctx.fillStyle = '#111827'
-    ctx.fill()
-    ctx.strokeStyle = '#4b5563'
-    ctx.lineWidth = 2
-    ctx.stroke()
+    ctx.beginPath(); ctx.arc(cx, cy, 20, 0, 2 * Math.PI)
+    const g = ctx.createRadialGradient(cx, cy - 4, 0, cx, cy, 20)
+    g.addColorStop(0, '#5BE3B0'); g.addColorStop(1, '#0FA56C')
+    ctx.fillStyle = g; ctx.fill()
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5; ctx.stroke()
   }
 
   function getResult(angle) {
-    const normalized = (((-angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI))
-    const normalized360 = (normalized / (2 * Math.PI)) * 100
-    let cumulative = 0
-    for (const item of items) {
-      cumulative += item.prob
-      if (normalized360 <= cumulative) return item
-    }
+    const n = (((-angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI))
+    const n360 = (n / (2 * Math.PI)) * 100
+    let cum = 0
+    for (const item of items) { cum += item.prob; if (n360 <= cum) return item }
     return items[items.length - 1]
   }
 
   function spin() {
     if (spinning || locked) return
-    onLock()
-    setSpinning(true)
-    const totalRotation = (8 + Math.random() * 8) * 2 * Math.PI
-    const duration = 3000 + Math.random() * 1500
-    const start = performance.now()
-    const startAngle = angleRef.current
+    onLock(); setSpinning(true)
+    const total = (8 + Math.random() * 8) * 2 * Math.PI
+    const dur = 3000 + Math.random() * 1500
+    const t0 = performance.now(), a0 = angleRef.current
     function animate(now) {
-      const elapsed = now - start
-      const progress = Math.min(elapsed / duration, 1)
-      const ease = 1 - Math.pow(1 - progress, 4)
-      angleRef.current = startAngle + totalRotation * ease
+      const p = Math.min((now - t0) / dur, 1)
+      angleRef.current = a0 + total * (1 - Math.pow(1 - p, 4))
       drawWheel(angleRef.current)
-      if (progress < 1) {
-        rafRef.current = requestAnimationFrame(animate)
-      } else {
-        setSpinning(false)
-        onResult(getResult(angleRef.current))
-      }
+      if (p < 1) { rafRef.current = requestAnimationFrame(animate) }
+      else { setSpinning(false); onResult(getResult(angleRef.current)) }
     }
     rafRef.current = requestAnimationFrame(animate)
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-10">
-          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent border-r-white drop-shadow-lg" />
-        </div>
-        <canvas ref={canvasRef} width={300} height={300} className="rounded-full shadow-2xl" />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          position: 'absolute', top: '50%', right: -14, transform: 'translateY(-50%)', zIndex: 10,
+          width: 0, height: 0,
+          borderTop: '11px solid transparent', borderBottom: '11px solid transparent',
+          borderRight: '18px solid #fff',
+          filter: 'drop-shadow(0 0 8px rgba(22,199,132,.7))'
+        }} />
+        <canvas ref={canvasRef} width={280} height={280}
+          style={{ borderRadius: '50%', display: 'block', cursor: locked ? 'default' : 'pointer' }}
+          onClick={spin}
+        />
       </div>
-      <button
-        onClick={spin}
-        disabled={spinning || locked}
-        className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95 disabled:scale-100"
-      >
-        {spinning ? 'GIRANDO...' : locked ? 'GIOCATA ✓' : 'GIRA! ⚽'}
+      <button onClick={spin} disabled={spinning || locked}
+        className="btn primary btn-sm"
+        style={{ opacity: (spinning || locked) ? 0.45 : 1, width: 'auto', minWidth: 140 }}>
+        {spinning ? 'GIRANDO...' : locked ? 'GIOCATA ✓' : 'GIRA!'}
       </button>
-      <p className="text-gray-600 text-xs">
-        premi <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">spazio</kbd> per girare
-      </p>
     </div>
   )
 }
@@ -149,9 +134,7 @@ export default function EuropaKnockout() {
   const [error, setError] = useState(null)
   const [phase, setPhase] = useState('playing')
 
-  useEffect(() => {
-    init()
-  }, [sessionId])
+  useEffect(() => { init() }, [sessionId])
 
   const init = async () => {
     try {
@@ -159,39 +142,21 @@ export default function EuropaKnockout() {
       const data = await res.json()
       setSession(data.session)
 
-      // Guard: redirect if session not in valid state for this page
-      if (!data.session?.finished) {
-        navigate(`/end-season/${sessionId}`, { replace: true })
-        return
-      }
-      if (!data.session?.europaData) {
-        navigate(`/end-season/${sessionId}`, { replace: true })
-        return
-      }
+      if (!data.session?.finished) { navigate(`/end-season/${sessionId}`, { replace: true }); return }
+      if (!data.session?.europaData) { navigate(`/end-season/${sessionId}`, { replace: true }); return }
       try {
         const ed = JSON.parse(data.session.europaData)
-        if (ed.phase !== 'knockout') {
-          navigate(`/end-season/${sessionId}`, { replace: true })
-          return
-        }
-      } catch {
-        navigate(`/end-season/${sessionId}`, { replace: true })
-        return
-      }
+        if (ed.phase !== 'knockout') { navigate(`/end-season/${sessionId}`, { replace: true }); return }
+      } catch { navigate(`/end-season/${sessionId}`, { replace: true }); return }
 
       await refreshState()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(err.message) } finally { setLoading(false) }
   }
 
   const refreshState = async () => {
     const stateRes = await fetch(`/api/europa/${sessionId}/state`)
     const stateData = await stateRes.json()
     setEuropaState(stateData)
-
     if (stateData.phase === 'eliminated') { setPhase('eliminated'); return }
     if (stateData.phase === 'winner') { setPhase('winner'); return }
     await fetchNextMatch()
@@ -201,249 +166,190 @@ export default function EuropaKnockout() {
     const res = await fetch(`/api/europa/${sessionId}/next-knockout-match`)
     const data = await res.json()
     if (data.finished) { setPhase('winner'); return }
-    setNextMatch(data.match)
-    setProbs(data.probs)
-    setLocked(false)
-    setPhase('playing')
+    setNextMatch(data.match); setProbs(data.probs); setLocked(false); setPhase('playing')
   }
 
   const handleWheelResult = async (item) => {
     try {
       const res = await fetch(`/api/europa/${sessionId}/play-knockout-match`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ result: item.result }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-
-      // Calcola il nome avversario corretto
       const opponentName = nextMatch?.opponentName ||
-        (nextMatch?.home === 'La Tua Squadra' ? nextMatch?.away : nextMatch?.home) ||
-        nextMatch?.away
-
-      setLastResult({
-        outcome: data.result,
-        goalsFor: data.goalsFor,
-        goalsAgainst: data.goalsAgainst,
-        opponent: opponentName,
-        eliminated: data.eliminated,
-        nextRound: data.nextRound,
-      })
-
+        (nextMatch?.home === 'La Tua Squadra' ? nextMatch?.away : nextMatch?.home) || nextMatch?.away
+      setLastResult({ outcome: data.result, goalsFor: data.goalsFor, goalsAgainst: data.goalsAgainst, opponent: opponentName, eliminated: data.eliminated, nextRound: data.nextRound })
       setTimeout(async () => {
         setLastResult(null)
-        if (data.eliminated) {
-          setPhase('eliminated')
-          await refreshState()
-        } else if (!data.nextRound) {
-          setPhase('winner')
-          await refreshState()
-        } else {
-          await refreshState()
-        }
+        if (data.eliminated) { setPhase('eliminated'); await refreshState() }
+        else if (!data.nextRound) { setPhase('winner'); await refreshState() }
+        else { await refreshState() }
       }, 2500)
-    } catch (err) {
-      setError(err.message)
-    }
+    } catch (err) { setError(err.message) }
   }
 
   const handleContinue = async () => {
-    const sessionRes = await fetch(`/api/game/${sessionId}`)
-    const sessionData = await sessionRes.json()
-    const pos = sessionData.session.position || 0
-    const scoreRes = await fetch(`/api/europa/${sessionId}/score`)
-    const scoreData = await scoreRes.json()
-    navigate(`/end-season/${sessionId}?fromEuropa=true&position=${pos}&score=${scoreData.score || 0}`)
+    const r = await fetch(`/api/game/${sessionId}`)
+    const d = await r.json()
+    const pos = d.session.position || 0
+    const sr = await fetch(`/api/europa/${sessionId}/score`)
+    const sd = await sr.json()
+    navigate(`/end-season/${sessionId}?fromEuropa=true&position=${pos}&score=${sd.score || 0}`)
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-gray-400 text-xl animate-pulse">Caricamento...</div>
-      </div>
-    )
+    return <div className="mister-loading"><div>Caricamento...</div></div>
   }
 
   const competition = europaState?.competition
-  const info = COMPETITION_INFO[competition] || COMPETITION_INFO.conference
+  const themeClass = COMP_THEME[competition] || 'theme-conference'
+  const info = COMP_INFO[competition] || COMP_INFO.conference
   const teamName = session?.nickname || 'La Tua Squadra'
   const currentRound = europaState?.knockoutRound
   const roundLabel = ROUND_LABELS[currentRound] || currentRound
   const currentRoundMatches = europaState?.knockoutMatches?.filter(m => m.round === currentRound) || []
+  const forza = nextMatch?.opponentRating
+    ? Math.min(5, Math.max(1, Math.ceil((nextMatch.opponentRating - 62) / 4)))
+    : 3
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-8">
-      <div className="max-w-lg mx-auto">
-
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-2">{info.emoji}</div>
-          <h1 className="text-3xl font-black text-white">{info.name}</h1>
-          {phase === 'playing' && <p className="text-blue-400 font-bold mt-1">{roundLabel}</p>}
-          <p className="text-gray-500 text-sm mt-1">{teamName}</p>
-        </div>
-
-        {/* Banner risultato */}
-        {lastResult && (
-          <div className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none">
-            <div className={`rounded-2xl p-8 text-center border shadow-2xl ${
-              lastResult.outcome === 'win' ? 'bg-green-500/95 border-green-400' :
-              lastResult.outcome === 'draw' ? 'bg-yellow-500/95 border-yellow-400' :
-              'bg-red-600/95 border-red-400'
-            }`}>
-              <div className="text-4xl font-black text-white mb-2">
-                {lastResult.outcome === 'win' ? '🏆 VITTORIA!' :
-                 lastResult.outcome === 'draw' ? '🤝 AI RIGORI' : '💀 ELIMINATO'}
-              </div>
-              <div className="text-white font-black text-5xl mb-2">
-                {lastResult.goalsFor} - {lastResult.goalsAgainst}
-              </div>
-              <div className="text-white/80 text-lg">vs {lastResult.opponent}</div>
-              {!lastResult.eliminated && lastResult.nextRound && (
-                <div className="text-white/60 text-sm mt-2">
-                  Accedi ai {ROUND_LABELS[lastResult.nextRound]}!
-                </div>
-              )}
+    <div className={`mister-page ${themeClass}`}>
+      {/* Result overlay */}
+      {lastResult && (
+        <div className="overlay">
+          <div className={`result-banner ${lastResult.outcome}`}>
+            <span className="rbk">{lastResult.outcome === 'win' ? 'W' : lastResult.outcome === 'draw' ? 'D' : 'L'}</span>
+            <div className="rres">
+              {lastResult.outcome === 'win' ? 'Vittoria' : lastResult.outcome === 'draw' ? 'Ai Rigori' : 'Sconfitta'}
             </div>
-          </div>
-        )}
-
-        {/* Prossima partita */}
-        {phase === 'playing' && nextMatch && !lastResult && (
-          <>
-            <div className="bg-gray-900 rounded-2xl p-4 mb-4 border border-gray-800">
-              <div className="text-gray-500 text-xs uppercase tracking-wider mb-2">{roundLabel}</div>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-white font-black text-xl">
-                    {nextMatch.opponentName ||
-                     (nextMatch.home === 'La Tua Squadra' ? nextMatch.away : nextMatch.home)}
-                  </div>
-                  <div className="text-gray-500 text-sm">
-                    Rating {nextMatch.opponentRating} · Eliminazione diretta
-                  </div>
-                  <div className="text-yellow-400 text-xs mt-1">
-                    ⚠️ In caso di pareggio si va ai rigori
-                  </div>
-                </div>
-              </div>
-              {probs && (
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-center">
-                    <div className="text-green-400 font-black">{probs.win}%</div>
-                    <div className="text-gray-600 text-xs">Vittoria</div>
-                  </div>
-                  <div className="flex-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2 text-center">
-                    <div className="text-yellow-400 font-black">{probs.draw}%</div>
-                    <div className="text-gray-600 text-xs">Rigori</div>
-                  </div>
-                  <div className="flex-1 bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-center">
-                    <div className="text-red-400 font-black">{probs.loss}%</div>
-                    <div className="text-gray-600 text-xs">Sconfitta</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {probs && (
-              <div className="flex flex-col items-center mb-6">
-                <MatchWheel
-                  probs={probs}
-                  onResult={handleWheelResult}
-                  locked={locked}
-                  onLock={() => setLocked(true)}
-                />
+            <div className="rvs">{teamName} vs {lastResult.opponent}</div>
+            <div className="rscore">{lastResult.goalsFor} – {lastResult.goalsAgainst}</div>
+            {!lastResult.eliminated && lastResult.nextRound && (
+              <div style={{ color: 'var(--ink-dim)', fontSize: 13, marginTop: 10 }}>
+                Accedi ai {ROUND_LABELS[lastResult.nextRound]}!
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Top bar */}
+      <div style={{ padding: '18px 22px 8px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span className="comp-pill">{info.label}</span>
+        {phase === 'playing' && roundLabel && (
+          <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--muted)' }}>{roundLabel}</span>
+        )}
+      </div>
+
+      <div className="page-scroll" style={{ flex: 1 }}>
+        {/* Match card */}
+        {phase === 'playing' && nextMatch && !lastResult && probs && (
+          <>
+            <div className="match-card">
+              <div className="mh">
+                <div className="mopp">
+                  <div className="mcrest">
+                    {(nextMatch.opponentName || nextMatch.away || 'O')[0]}
+                  </div>
+                  <div>
+                    <b>{nextMatch.opponentName || (nextMatch.home === 'La Tua Squadra' ? nextMatch.away : nextMatch.home)}</b>
+                    <small>{roundLabel} · Eliminazione diretta</small>
+                  </div>
+                </div>
+              </div>
+
+              <div className="forza">
+                <span className="flbl">Forza</span>
+                <div className="bars">
+                  {[1,2,3,4,5].map(n => <i key={n} className={n <= forza ? 'f' : ''} />)}
+                </div>
+              </div>
+
+              <div className="prob">
+                <span className="pv" style={{ width: `${probs.win}%` }}>{probs.win}%</span>
+                <span className="pp" style={{ width: `${probs.draw}%` }}>{probs.draw}%</span>
+                <span className="ps" style={{ width: `${probs.loss}%` }}>{probs.loss}%</span>
+              </div>
+              <div className="prob-key">
+                <span><i style={{ background: 'var(--win)' }} />Vittoria</span>
+                <span><i style={{ background: 'var(--draw)' }} />Rigori</span>
+                <span><i style={{ background: 'var(--loss)' }} />Sconfitta</span>
+              </div>
+            </div>
+
+            <div className="wheelwrap" style={{ marginTop: 18 }}>
+              <MatchWheel probs={probs} onResult={handleWheelResult} locked={locked} onLock={() => setLocked(true)} />
+            </div>
           </>
         )}
 
-        {/* Tabellone */}
+        {/* Bracket */}
         {currentRoundMatches.length > 0 && phase === 'playing' && (
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-4">
-            <h2 className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">
-              {roundLabel} — Tabellone
-            </h2>
-            <div className="space-y-2">
+          <>
+            <div className="section-title">Tabellone — {roundLabel}</div>
+            <div style={{ padding: '0 22px' }}>
               {currentRoundMatches.map((match, i) => {
-                const isPlayerMatch = match.isPlayerMatch
-                const displayHome = match.home === 'La Tua Squadra' ? `⭐ ${teamName}` : match.home
-                const displayAway = match.away === 'La Tua Squadra' ? `⭐ ${teamName}` : match.away
+                const isYou = match.isPlayerMatch
+                const home = match.home === 'La Tua Squadra' ? teamName : match.home
+                const away = match.away === 'La Tua Squadra' ? teamName : match.away
                 return (
-                  <div key={i} className={`flex items-center justify-between px-3 py-2 rounded-lg ${
-                    isPlayerMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-gray-800'
-                  }`}>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className={match.home === 'La Tua Squadra' ? 'text-green-400 font-bold' : 'text-gray-300'}>
-                        {displayHome}
-                      </span>
-                      <span className="text-gray-600">vs</span>
-                      <span className={match.away === 'La Tua Squadra' ? 'text-green-400 font-bold' : 'text-gray-300'}>
-                        {displayAway}
-                      </span>
-                    </div>
+                  <div key={i} className={`rrow ${isYou ? 'you' : ''}`} style={isYou ? { background: 'color-mix(in oklab,var(--primary) 10%,transparent)', padding: '10px 10px', borderRadius: 'var(--r-sm)', border: '1px solid color-mix(in oklab,var(--primary) 30%,transparent)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10 } : {}}>
+                    <span className="rnm" style={{ flex: 1 }}>{home}</span>
+                    <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--muted)' }}>vs</span>
+                    <span className="rnm" style={{ flex: 1, textAlign: 'right' }}>{away}</span>
                     {match.played ? (
-                      <span className="text-xs font-bold text-gray-500">
-                        {match.goalsFor ?? '?'} - {match.goalsAgainst ?? '?'}
-                      </span>
+                      <span className="rovr">{match.goalsFor ?? '?'}–{match.goalsAgainst ?? '?'}</span>
                     ) : (
-                      <span className="text-xs text-gray-600">Da giocare</span>
+                      <span style={{ fontFamily: 'var(--font-num)', fontSize: 10, color: 'var(--muted)' }}>vs</span>
                     )}
                   </div>
                 )
               })}
             </div>
-          </div>
+          </>
         )}
 
-        {/* Eliminato */}
+        {/* Eliminated */}
         {phase === 'eliminated' && !lastResult && (
-          <div className="text-center">
-            <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 mb-6">
-              <div className="text-4xl mb-2">💀</div>
-              <div className="text-red-400 font-black text-xl">Eliminato!</div>
-              <div className="text-gray-400 text-sm mt-1">
-                Sei uscito agli {ROUND_LABELS[europaState?.finalRound] || 'dalla competizione'}
-              </div>
-              <div className="text-green-400 font-bold text-lg mt-3">
-                +{europaState?.europaScore || 0} punti bonus
-              </div>
+          <div style={{ margin: '16px 22px 0', background: 'color-mix(in oklab,var(--loss) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--loss) 40%,transparent)', borderRadius: 'var(--r-lg)', padding: '24px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>💀</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, textTransform: 'uppercase', color: 'var(--loss)' }}>Eliminato!</div>
+            <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>
+              Sei uscito {ROUND_LABELS[europaState?.finalRound] ? `agli ${ROUND_LABELS[europaState.finalRound]}` : 'dalla competizione'}
             </div>
-            <button
-              onClick={handleContinue}
-              className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all"
-            >
-              CONTINUA →
-            </button>
+            <div style={{ fontFamily: 'var(--font-num)', fontWeight: 700, fontSize: 18, color: 'var(--primary)', marginTop: 12 }}>
+              +{europaState?.europaScore || 0} punti bonus
+            </div>
           </div>
         )}
 
-        {/* Vincitore */}
+        {/* Winner */}
         {phase === 'winner' && !lastResult && (
-          <div className="text-center">
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-6">
-              <div className="text-5xl mb-3">🏆</div>
-              <div className="text-yellow-400 font-black text-2xl">HAI VINTO!</div>
-              <div className="text-white text-lg mt-1">{info.name}</div>
-              <div className="text-green-400 font-bold text-xl mt-3">
-                +{europaState?.europaScore || 0} punti bonus
-              </div>
+          <div style={{ margin: '16px 22px 0', background: 'color-mix(in oklab,var(--draw) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--draw) 40%,transparent)', borderRadius: 'var(--r-lg)', padding: '24px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 8 }}>🏆</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, textTransform: 'uppercase', color: 'var(--draw)' }}>HAI VINTO!</div>
+            <div style={{ color: 'var(--ink-dim)', fontSize: 16, marginTop: 4 }}>{info.name}</div>
+            <div style={{ fontFamily: 'var(--font-num)', fontWeight: 700, fontSize: 18, color: 'var(--primary)', marginTop: 12 }}>
+              +{europaState?.europaScore || 0} punti bonus
             </div>
-            <button
-              onClick={handleContinue}
-              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xl py-4 rounded-2xl transition-all"
-            >
-              CONTINUA →
-            </button>
           </div>
         )}
 
         {error && (
-          <div className="mt-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
+          <div style={{ margin: '12px 22px 0', padding: '10px 14px', background: 'color-mix(in oklab,var(--loss) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--loss) 40%,transparent)', borderRadius: 'var(--r-sm)', color: 'var(--loss)', fontSize: 13 }}>
             {error}
           </div>
         )}
+
+        <div style={{ height: 100 }} />
       </div>
+
+      {(phase === 'eliminated' || phase === 'winner') && !lastResult && (
+        <div className="screen-foot">
+          <button onClick={handleContinue} className="btn primary">CONTINUA ▶</button>
+        </div>
+      )}
     </div>
   )
 }

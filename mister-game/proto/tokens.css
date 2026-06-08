@@ -1,0 +1,49 @@
+/* ============================================================
+   MISTER · PRO PITCH — design tokens
+   Drop straight into your app (or map into tailwind.config).
+   ============================================================ */
+:root{
+  /* surfaces */
+  --bg:        #0A0D11;
+  --bg-2:      #070A0D;
+  --surface:   #141A20;
+  --surface-2: #1B232B;
+  --surface-3: #232D37;
+  --line:      rgba(255,255,255,.09);
+  --line-soft: rgba(255,255,255,.05);
+
+  /* ink */
+  --ink:       #EAF1F4;
+  --ink-dim:   #B7C3CD;
+  --muted:     #8A98A6;
+
+  /* brand */
+  --primary:    #16C784;   /* emerald */
+  --primary-700:#0FA56C;
+  --primary-300:#5BE3B0;
+  --primary-ink:#04130D;
+  --glow:       #16C784;
+
+  /* match states */
+  --win:  #16C784;
+  --draw: #F5B43C;
+  --loss: #FB5566;
+
+  /* competitions (kept recognisable) */
+  --champions: #2E6BFF;
+  --europa:    #FF7A18;
+  --conference:#16D17A;
+
+  /* radii / shadow */
+  --r-lg: 22px;
+  --r-md: 16px;
+  --r-sm: 11px;
+  --r-pill: 999px;
+  --shadow-card: 0 18px 40px -22px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.04) inset;
+  --shadow-pop:  0 30px 70px -30px rgba(0,0,0,.95);
+
+  /* type */
+  --font-display:'Saira Condensed', system-ui, sans-serif;
+  --font-ui:'Hanken Grotesk', system-ui, sans-serif;
+  --font-num:'DM Mono', ui-monospace, monospace;
+}

@@ -10,19 +10,19 @@ const BUDGETS = [
 ]
 
 const FORMATIONS = [
-  { id: '4-3-3', slots: { GK: 1, DEF: 4, MID: 3, ATT: 3 } },
-  { id: '4-4-2', slots: { GK: 1, DEF: 4, MID: 4, ATT: 2 } },
-  { id: '3-5-2', slots: { GK: 1, DEF: 3, MID: 5, ATT: 2 } },
-  { id: '5-3-2', slots: { GK: 1, DEF: 5, MID: 3, ATT: 2 } },
-  { id: '4-2-3-1', slots: { GK: 1, DEF: 4, MID: 5, ATT: 1 } },
+  { id: '4-3-3', slots: { GK: 1, DEF: 4, MID: 3, ATT: 3 }, color: '#16C784' },
+  { id: '4-4-2', slots: { GK: 1, DEF: 4, MID: 4, ATT: 2 }, color: '#F97316' },
+  { id: '3-5-2', slots: { GK: 1, DEF: 3, MID: 5, ATT: 2 }, color: '#8B5CF6' },
+  { id: '5-3-2', slots: { GK: 1, DEF: 5, MID: 3, ATT: 2 }, color: '#EF4444' },
+  { id: '4-2-3-1', slots: { GK: 1, DEF: 4, MID: 5, ATT: 1 }, color: '#F59E0B' },
 ]
 
 const LEAGUES = [
-  { code: 'PL', name: 'Premier League', country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-  { code: 'SA', name: 'Serie A', country: '🇮🇹' },
-  { code: 'BL', name: 'Bundesliga', country: '🇩🇪' },
-  { code: 'LL', name: 'La Liga', country: '🇪🇸' },
-  { code: 'L1', name: 'Ligue 1', country: '🇫🇷' },
+  { code: 'PL', name: 'Premier League', country: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', color: '#6D28D9' },
+  { code: 'SA', name: 'Serie A', country: '🇮🇹', color: '#1D4ED8' },
+  { code: 'BL', name: 'Bundesliga', country: '🇩🇪', color: '#DC2626' },
+  { code: 'LL', name: 'La Liga', country: '🇪🇸', color: '#EA580C' },
+  { code: 'L1', name: 'Ligue 1', country: '🇫🇷', color: '#0EA5E9' },
 ]
 
 const POSITION_ORDER = ['GK', 'DEF', 'MID', 'ATT']
@@ -35,17 +35,17 @@ const BUDGET_FILTERS = {
   30: (p) => p.rating <= 78,
 }
 
+const SEG_COLORS = [
+  '#16C784','#F97316','#8B5CF6','#EF4444','#0EA5E9',
+  '#F59E0B','#6D28D9','#DC2626','#1D4ED8','#EA580C',
+  '#059669','#D97706','#7C3AED','#B91C1C','#0284C7',
+]
+
 function SpinWheel({ items, onResult, locked, onLock }) {
   const canvasRef = useRef(null)
   const angleRef = useRef(0)
   const rafRef = useRef(null)
   const [spinning, setSpinning] = useState(false)
-
-  const colors = [
-    '#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
-    '#06b6d4', '#f97316', '#ec4899', '#10b981', '#6366f1',
-    '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9', '#a855f7',
-  ]
 
   useEffect(() => {
     drawWheel(angleRef.current)
@@ -68,6 +68,17 @@ function SpinWheel({ items, onResult, locked, onLock }) {
     const R = Math.min(W, H) / 2 - 8
 
     ctx.clearRect(0, 0, W, H)
+
+    // glow shadow
+    ctx.save()
+    ctx.shadowColor = 'rgba(22,199,132,.35)'
+    ctx.shadowBlur = 28
+    ctx.beginPath()
+    ctx.arc(cx, cy, R, 0, 2 * Math.PI)
+    ctx.fillStyle = 'transparent'
+    ctx.fill()
+    ctx.restore()
+
     const arc = (2 * Math.PI) / items.length
 
     items.forEach((item, i) => {
@@ -77,32 +88,34 @@ function SpinWheel({ items, onResult, locked, onLock }) {
       ctx.moveTo(cx, cy)
       ctx.arc(cx, cy, R, start, end)
       ctx.closePath()
-      ctx.fillStyle = colors[i % colors.length]
+      ctx.fillStyle = item.color || SEG_COLORS[i % SEG_COLORS.length]
       ctx.fill()
-      ctx.strokeStyle = '#111827'
-      ctx.lineWidth = 2
+      ctx.strokeStyle = 'rgba(4,7,10,.6)'
+      ctx.lineWidth = 1.5
       ctx.stroke()
 
       ctx.save()
       ctx.translate(cx, cy)
       ctx.rotate(start + arc / 2)
       ctx.textAlign = 'right'
-      ctx.fillStyle = '#fff'
-      ctx.font = `bold ${items.length > 10 ? '9' : '12'}px monospace`
-      ctx.shadowColor = 'rgba(0,0,0,0.8)'
-      ctx.shadowBlur = 4
+      ctx.fillStyle = 'rgba(255,255,255,0.92)'
+      ctx.font = `bold ${items.length > 10 ? '9' : '12'}px 'Saira Condensed', monospace`
       const label = item.label || item.name || item.id || String(item)
       const truncated = label.length > 14 ? label.slice(0, 13) + '…' : label
       ctx.fillText(truncated, R - 8, 4)
       ctx.restore()
     })
 
+    // center hub
     ctx.beginPath()
-    ctx.arc(cx, cy, 18, 0, 2 * Math.PI)
-    ctx.fillStyle = '#111827'
+    ctx.arc(cx, cy, 20, 0, 2 * Math.PI)
+    const grad = ctx.createRadialGradient(cx, cy - 4, 0, cx, cy, 20)
+    grad.addColorStop(0, '#5BE3B0')
+    grad.addColorStop(1, '#0FA56C')
+    ctx.fillStyle = grad
     ctx.fill()
-    ctx.strokeStyle = '#4b5563'
-    ctx.lineWidth = 2
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'
+    ctx.lineWidth = 1.5
     ctx.stroke()
   }
 
@@ -140,28 +153,44 @@ function SpinWheel({ items, onResult, locked, onLock }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-10">
-          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-r-[20px] border-t-transparent border-b-transparent border-r-white drop-shadow-lg" />
-        </div>
-        <canvas ref={canvasRef} width={320} height={320} className="rounded-full shadow-2xl shadow-green-500/10" />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      <div style={{ position: 'relative' }}>
+        {/* pointer */}
+        <div style={{
+          position: 'absolute', top: '50%', right: -14, transform: 'translateY(-50%)',
+          zIndex: 10, width: 0, height: 0,
+          borderTop: '11px solid transparent', borderBottom: '11px solid transparent',
+          borderRight: '18px solid #fff',
+          filter: 'drop-shadow(0 0 8px rgba(22,199,132,.7))'
+        }} />
+        <canvas
+          ref={canvasRef}
+          width={300}
+          height={300}
+          style={{ borderRadius: '50%', display: 'block', cursor: locked ? 'default' : 'pointer' }}
+          onClick={spin}
+        />
       </div>
       <button
         onClick={spin}
         disabled={spinning || locked || items.length === 0}
-        className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95 disabled:scale-100"
+        className="btn primary btn-sm"
+        style={{ opacity: (spinning || locked || items.length === 0) ? 0.45 : 1, width: 'auto', minWidth: 140 }}
       >
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA! 🎰'}
+        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
       </button>
-      <p className="text-gray-600 text-xs">
-        premi <kbd className="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded text-xs">spazio</kbd> per girare
-      </p>
     </div>
   )
 }
 
 const STEPS = ['league', 'budget', 'formation', 'nickname', 'players']
+const STEP_LABELS = {
+  league: 'Campionato',
+  budget: 'Budget',
+  formation: 'Modulo',
+  nickname: 'Nome squadra',
+  players: 'Giocatori',
+}
 
 export default function Wheel() {
   const navigate = useNavigate()
@@ -187,10 +216,10 @@ export default function Wheel() {
   const [error, setError] = useState(null)
 
   const getWheelItems = () => {
-    if (step === 'league') return LEAGUES.map(l => ({ ...l, label: l.country + ' ' + l.name }))
-    if (step === 'budget') return BUDGETS.map(b => ({ ...b, label: b.label }))
+    if (step === 'league')    return LEAGUES.map(l => ({ ...l, label: l.country + ' ' + l.name }))
+    if (step === 'budget')    return BUDGETS.map(b => ({ ...b, label: b.label }))
     if (step === 'formation') return FORMATIONS.map(f => ({ ...f, label: f.id }))
-    if (step === 'players') return wheelPlayers.map(p => ({ ...p, label: p.name }))
+    if (step === 'players')   return wheelPlayers.map(p => ({ ...p, label: p.name }))
     return []
   }
 
@@ -315,153 +344,158 @@ export default function Wheel() {
   const slots = formation?.slots || {}
   const currentPositionSlots = slots[currentPosition] || 0
   const currentPositionCount = squad.filter(p => p.position === currentPosition).length
+  const stepIdx = STEPS.indexOf(step)
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-lg">
+    <div className="mister-page">
+      {/* Steps indicator */}
+      <div className="steps" style={{ paddingTop: 18 }}>
+        {STEPS.map((s, i) => (
+          <i key={s} className={i < stepIdx ? 'done' : i === stepIdx ? 'now' : ''} />
+        ))}
+      </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-black text-white tracking-tight">🎰 MISTER</h1>
-          <p className="text-gray-500 mt-2">
-            {step === 'league' && 'Gira per un campionato casuale o scegli tu'}
-            {step === 'budget' && 'Gira per scoprire il tuo budget'}
-            {step === 'formation' && 'Gira per ottenere il modulo'}
-            {step === 'nickname' && 'Come si chiama la tua squadra?'}
-            {step === 'players' && `${POSITION_LABELS[currentPosition]} — ${currentPositionCount}/${currentPositionSlots}`}
-          </p>
-        </div>
+      {/* Header */}
+      <div className="setup-prompt">
+        <div className="lbl">{STEP_LABELS[step]}</div>
+        <h2>
+          {step === 'league' && 'Scegli il campionato'}
+          {step === 'budget' && 'Budget a disposizione'}
+          {step === 'formation' && 'Modulo di gioco'}
+          {step === 'nickname' && 'Nome della squadra'}
+          {step === 'players' && `${POSITION_LABELS[currentPosition]} — ${currentPositionCount}/${currentPositionSlots}`}
+        </h2>
+      </div>
 
-        {/* Risultato corrente */}
-        {result && step !== 'players' && (
-          <div className="text-center mb-6">
-            <div className="inline-block bg-green-500/10 border border-green-500/30 rounded-2xl px-6 py-3">
-              <div className="text-2xl font-black text-green-400">
-                {step === 'league' && `${result.country} ${result.name}`}
-                {step === 'budget' && `💰 ${result.label} — ${result.description}`}
-                {step === 'formation' && `📋 ${result.id}`}
-              </div>
+      {/* NICKNAME STEP */}
+      {step === 'nickname' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '14px 22px 0', gap: 14 }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
+            <div style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--muted)', textAlign: 'center', marginBottom: 12 }}>
+              {league?.country} {league?.name} · {budget?.label} · {formation?.id}
             </div>
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Nome squadra..."
+              maxLength={20}
+              className="name-input"
+              style={{ textAlign: 'center' }}
+              onKeyDown={(e) => e.key === 'Enter' && nickname.trim() && createSession()}
+            />
           </div>
-        )}
-
-        {result && step === 'players' && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-            <div className="bg-green-500/95 border border-green-400 rounded-2xl p-8 text-center shadow-2xl">
-              <div className="text-2xl mb-1">⚽</div>
-              <div className="text-white font-black text-2xl mb-1">{result.name}</div>
-              <div className="text-white/80 text-lg">OVR {result.rating} · {result.cost}M</div>
-              <div className={`text-xs font-bold mt-2 px-2 py-1 rounded inline-block ${
-                result.position === 'GK' ? 'bg-yellow-500/30 text-yellow-200' :
-                result.position === 'DEF' ? 'bg-blue-500/30 text-blue-200' :
-                result.position === 'MID' ? 'bg-purple-500/30 text-purple-200' :
-                'bg-red-500/30 text-red-200'
-              }`}>{result.position}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Step nickname */}
-        {step === 'nickname' && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-full bg-gray-900 rounded-2xl p-6 border border-gray-800">
-              <div className="text-center mb-4 text-gray-400 text-sm">
-                <span className="text-white font-bold">{league?.country} {league?.name}</span> ·{' '}
-                <span className="text-yellow-400 font-bold">{budget?.label}</span> ·{' '}
-                <span className="text-blue-400 font-bold">{formation?.id}</span>
-              </div>
-              <input
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="Nome squadra..."
-                maxLength={20}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-green-500 transition-colors text-center text-xl font-bold"
-                onKeyDown={(e) => e.key === 'Enter' && nickname.trim() && createSession()}
-              />
-            </div>
-            {error && <div className="text-red-400 text-sm">{error}</div>}
+          {error && <div style={{ color: 'var(--loss)', fontSize: 13, textAlign: 'center' }}>{error}</div>}
+          <div style={{ flex: 1 }} />
+          <div className="screen-foot" style={{ padding: 0 }}>
             <button
               onClick={createSession}
               disabled={!nickname.trim() || loading}
-              className="bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95"
+              className="btn primary"
+              style={{ opacity: (!nickname.trim() || loading) ? 0.4 : 1 }}
             >
-              {loading ? 'Caricamento...' : 'INIZIA A GIRARE! ⚽'}
+              {loading ? 'Caricamento...' : 'INIZIA A GIRARE ▶'}
             </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Ruota */}
-        {step !== 'nickname' && (
-          <div className="flex flex-col items-center gap-6">
-            <SpinWheel
-              items={getWheelItems()}
-              onResult={
-                step === 'league' ? handleLeagueResult :
-                step === 'budget' ? handleBudgetResult :
-                step === 'formation' ? handleFormationResult :
-                handlePlayerResult
-              }
-              locked={step === 'players' ? playerLocked : locked}
-              onLock={() => step === 'players' ? setPlayerLocked(true) : setLocked(true)}
-            />
+      {/* WHEEL STEPS */}
+      {step !== 'nickname' && (
+        <>
+          <div className="page-scroll" style={{ flex: 1 }}>
+            <div className="wheelwrap">
+              <SpinWheel
+                items={getWheelItems()}
+                onResult={
+                  step === 'league' ? handleLeagueResult :
+                  step === 'budget' ? handleBudgetResult :
+                  step === 'formation' ? handleFormationResult :
+                  handlePlayerResult
+                }
+                locked={step === 'players' ? playerLocked : locked}
+                onLock={() => step === 'players' ? setPlayerLocked(true) : setLocked(true)}
+              />
+            </div>
 
-            {/* Scelta manuale campionato */}
+            {/* Result tag */}
+            {result && step !== 'players' && (
+              <div className="result-tag">
+                <b>
+                  {step === 'league' && `${result.country} ${result.name}`}
+                  {step === 'budget' && result.label}
+                  {step === 'formation' && result.id}
+                </b>
+                <span>
+                  {step === 'budget' && result.description}
+                  {step === 'formation' && 'Modulo'}
+                  {step === 'league' && 'Campionato'}
+                </span>
+              </div>
+            )}
+
+            {result && step === 'players' && (
+              <div className="result-tag">
+                <b>{result.name}</b>
+                <span>OVR {result.rating}</span>
+              </div>
+            )}
+
+            {/* Manual league choice */}
             {step === 'league' && !locked && (
-              <div className="w-full">
-                <p className="text-gray-600 text-xs text-center mb-3">oppure scegli tu</p>
-                <div className="grid grid-cols-5 gap-2">
+              <div style={{ padding: '16px 22px 0' }}>
+                <div className="section-title" style={{ paddingLeft: 0 }}>oppure scegli tu</div>
+                <div style={{ display: 'flex', gap: 6 }}>
                   {LEAGUES.map(l => (
                     <button
                       key={l.code}
                       onClick={() => handleManualLeague(l)}
-                      className="bg-gray-900 hover:bg-gray-800 border border-gray-700 hover:border-green-500 rounded-xl p-2 text-center transition-all"
+                      className="opt"
+                      style={{ flex: 1, padding: '8px 4px', textAlign: 'center', minWidth: 0 }}
                     >
-                      <div className="text-xl">{l.country}</div>
-                      <div className="text-gray-400 text-xs mt-1">{l.code}</div>
+                      <b style={{ fontSize: 20, letterSpacing: 0 }}>{l.country}</b>
+                      <small style={{ display: 'block' }}>{l.code}</small>
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Rosa accumulata */}
+            {/* Accumulated squad */}
             {step === 'players' && squad.length > 0 && (
-              <div className="w-full bg-gray-900 rounded-2xl p-4 border border-gray-800">
-                <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">
+              <div style={{ padding: '16px 22px 0' }}>
+                <div className="section-title" style={{ paddingLeft: 0 }}>
                   Rosa ({squad.length}/{Object.values(slots).reduce((a, b) => a + b, 0)})
                 </div>
-                <div className="grid grid-cols-2 gap-1">
+                <div className="roster" style={{ padding: 0 }}>
                   {squad.map((p, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                        p.position === 'GK' ? 'bg-yellow-500/20 text-yellow-400' :
-                        p.position === 'DEF' ? 'bg-blue-500/20 text-blue-400' :
-                        p.position === 'MID' ? 'bg-purple-500/20 text-purple-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>{p.position}</span>
-                      <span className="text-white truncate">{p.name}</span>
+                    <div key={i} className="rrow">
+                      <span className="rrole">{p.position}</span>
+                      <span className="rnm">{p.name}</span>
+                      <span className="rovr" style={{ color: 'var(--primary)' }}>{p.rating}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Bottone avanti */}
-            {result && step !== 'players' && (
-              <button
-                onClick={nextStep}
-                className="bg-white hover:bg-gray-100 text-black font-black text-lg px-10 py-3 rounded-2xl transition-all hover:scale-105 active:scale-95"
-              >
-                AVANTI →
-              </button>
+            {loading && step === 'players' && (
+              <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '12px 0', fontFamily: 'var(--font-num)', fontSize: 12 }}>
+                Salvataggio rosa in corso...
+              </div>
             )}
           </div>
-        )}
 
-        {loading && step === 'players' && (
-          <div className="text-center text-gray-400 mt-4">Salvataggio rosa in corso...</div>
-        )}
-      </div>
+          {/* CTA */}
+          {result && step !== 'players' && (
+            <div className="screen-foot">
+              <button onClick={nextStep} className="btn primary">
+                {step === 'formation' ? 'SCEGLI IL NOME ▶' : 'AVANTI ▶'}
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

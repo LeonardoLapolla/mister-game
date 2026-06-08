@@ -3,10 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 import useBlockBack from '../hooks/useBlockBack'
 
-const COMPETITION_INFO = {
-  champions: { name: 'Champions League', emoji: '🏆', color: '#1a56db', bg: 'rgba(26,86,219,0.1)', border: 'rgba(26,86,219,0.3)' },
-  europa: { name: 'Europa League', emoji: '🟠', color: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' },
-  conference: { name: 'Conference League', emoji: '🟢', color: '#22c55e', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)' },
+const COMP_THEME = {
+  champions: 'theme-champions',
+  europa: 'theme-europa',
+  conference: 'theme-conference',
+}
+
+const COMP_INFO = {
+  champions: { name: 'Champions League', label: 'UEFA Champions League', badge: 'ch' },
+  europa: { name: 'Europa League', label: 'UEFA Europa League', badge: 'el' },
+  conference: { name: 'Conference League', label: 'UEFA Conference League', badge: 'co' },
 }
 
 export default function EuropaGroup() {
@@ -18,11 +24,9 @@ export default function EuropaGroup() {
   const [loading, setLoading] = useState(true)
   const [europaState, setEuropaState] = useState(null)
   const [error, setError] = useState(null)
-  const [phase, setPhase] = useState('results') // results | eliminated | qualified
+  const [phase, setPhase] = useState('results')
 
-  useEffect(() => {
-    init()
-  }, [sessionId])
+  useEffect(() => { init() }, [sessionId])
 
   const init = async () => {
     try {
@@ -30,45 +34,27 @@ export default function EuropaGroup() {
       const data = await res.json()
       setSession(data.session)
 
-      // Guard: redirect if session not in valid state for this page
-      if (!data.session?.finished) {
-        navigate(`/end-season/${sessionId}`, { replace: true })
-        return
-      }
+      if (!data.session?.finished) { navigate(`/end-season/${sessionId}`, { replace: true }); return }
       if (data.session?.europaData) {
         try {
           const ed = JSON.parse(data.session.europaData)
-          if (ed.phase === 'eliminated' || ed.phase === 'winner') {
-            navigate(`/end-season/${sessionId}`, { replace: true })
-            return
-          }
-          if (ed.phase === 'knockout') {
-            navigate(`/europa-knockout/${sessionId}`, { replace: true })
-            return
-          }
+          if (ed.phase === 'eliminated' || ed.phase === 'winner') { navigate(`/end-season/${sessionId}`, { replace: true }); return }
+          if (ed.phase === 'knockout') { navigate(`/europa-knockout/${sessionId}`, { replace: true }); return }
         } catch {}
       }
 
-      // Genera il girone (simula tutto automaticamente)
       const groupRes = await fetch(`/api/europa/${sessionId}/generate-group`, { method: 'POST' })
       const groupData = await groupRes.json()
       if (!groupRes.ok) throw new Error(groupData.error)
 
-      // Finalizza subito il girone
       const finishRes = await fetch(`/api/europa/${sessionId}/finish-group`, { method: 'POST' })
       const finishData = await finishRes.json()
       if (!finishRes.ok) throw new Error(finishData.error)
 
-      // Recupera stato completo
       const stateRes = await fetch(`/api/europa/${sessionId}/state`)
       const stateData = await stateRes.json()
       setEuropaState(stateData)
-
-      if (finishData.qualified) {
-        setPhase('qualified')
-      } else {
-        setPhase('eliminated')
-      }
+      setPhase(finishData.qualified ? 'qualified' : 'eliminated')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -77,169 +63,137 @@ export default function EuropaGroup() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-gray-400 text-xl animate-pulse">Simulazione girone...</div>
-      </div>
-    )
+    return <div className="mister-loading"><div>Simulazione girone...</div></div>
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-red-400 text-xl">{error}</div>
-      </div>
-    )
+    return <div className="mister-loading" style={{ color: 'var(--loss)' }}><div>{error}</div></div>
   }
 
   const competition = europaState?.competition
-  const info = COMPETITION_INFO[competition] || COMPETITION_INFO.conference
+  const themeClass = COMP_THEME[competition] || 'theme-conference'
+  const info = COMP_INFO[competition] || COMP_INFO.conference
   const teamName = session?.nickname || 'La Tua Squadra'
   const standings = europaState?.standings || []
   const playerStats = europaState?.playerStats || {}
   const groupPosition = europaState?.groupPosition
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className={`mister-page ${themeClass}`}>
+      {/* Top bar */}
+      <div style={{ padding: '18px 22px 8px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span className="comp-pill">{info.label}</span>
+        <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--muted)' }}>Fase a Gironi</span>
+      </div>
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-2">{info.emoji}</div>
-          <h1 className="text-3xl font-black text-white">{info.name}</h1>
-          <p className="text-gray-500 mt-1">Fase a Gironi · {teamName}</p>
+      <div className="page-scroll" style={{ flex: 1 }}>
+        {/* Competition hero */}
+        <div className="comp-hero">
+          <span className="comp-badge">{info.label}</span>
+          <div className="h-display" style={{ fontSize: 36, marginTop: 8 }}>{info.name}</div>
+          <div style={{ fontFamily: 'var(--font-num)', fontSize: 12, color: 'var(--ink-dim)', marginTop: 8 }}>{teamName} · Fase a Gironi</div>
         </div>
 
-        {/* Stats giocatore */}
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {[
-            { label: 'Punti', value: playerStats.pts || 0, color: 'text-green-400' },
-            { label: 'V', value: playerStats.w || 0, color: 'text-green-400' },
-            { label: 'P', value: playerStats.d || 0, color: 'text-yellow-400' },
-            { label: 'S', value: playerStats.l || 0, color: 'text-red-400' },
-            { label: 'Gol', value: `${playerStats.gf || 0}/${playerStats.ga || 0}`, color: 'text-white' },
-          ].map(s => (
-            <div key={s.label} className="bg-gray-900 rounded-xl p-3 text-center">
-              <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
-              <div className="text-gray-600 text-xs">{s.label}</div>
-            </div>
-          ))}
+        {/* Stats bar */}
+        <div className="stats-bar">
+          <div className="sc hl"><div className="sn">{playerStats.pts || 0}</div><div className="sk">Pt</div></div>
+          <div className="sc sv"><div className="sn">{playerStats.w || 0}</div><div className="sk">V</div></div>
+          <div className="sc sp"><div className="sn">{playerStats.d || 0}</div><div className="sk">P</div></div>
+          <div className="sc ss"><div className="sn">{playerStats.l || 0}</div><div className="sk">S</div></div>
+          <div className="sc"><div className="sn" style={{ fontSize: 14 }}>{playerStats.gf || 0}/{playerStats.ga || 0}</div><div className="sk">Gol</div></div>
         </div>
 
-        {/* Risultati partite giocatore */}
+        {/* Your matches */}
         {europaState?.playerMatches?.length > 0 && (
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-4">
-            <h2 className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">
-              Le tue partite nel girone
-            </h2>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
+          <>
+            <div className="section-title">Le tue partite</div>
+            <div style={{ padding: '0 22px' }}>
               {europaState.playerMatches.map((m, i) => {
-                const win = m.result === 'win'
-                const draw = m.result === 'draw'
+                const win = m.result === 'win', draw = m.result === 'draw'
                 return (
-                  <div key={i} className="flex items-center justify-between px-3 py-1.5 bg-gray-800 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                        win ? 'bg-green-500/20 text-green-400' :
-                        draw ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>{win ? 'V' : draw ? 'P' : 'S'}</span>
-                      <span className="text-gray-300 text-xs truncate max-w-32">{m.opponent}</span>
-                    </div>
-                    <span className="text-white text-xs font-black">{m.goalsFor} - {m.goalsAgainst}</span>
+                  <div key={i} className="rrow">
+                    <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: win ? 'var(--win)' : draw ? 'var(--draw)' : 'var(--loss)', width: 16 }}>
+                      {win ? 'V' : draw ? 'P' : 'S'}
+                    </span>
+                    <span className="rnm">{m.opponent}</span>
+                    <span className="rovr">{m.goalsFor}–{m.goalsAgainst}</span>
                   </div>
                 )
               })}
             </div>
-          </div>
+          </>
         )}
 
-        {/* Classifica girone */}
+        {/* Group standings */}
         {standings.length > 0 && (
-          <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-4">
-            <h2 className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">
-              Classifica Girone
-            </h2>
-            <div className="space-y-1 max-h-64 overflow-y-auto">
+          <>
+            <div className="section-title">Classifica girone</div>
+            <div className="std">
+              <div className="std-h"><span>#</span><span>Squadra</span><span>V</span><span>P</span><span>S</span><span>Pt</span></div>
               {standings.map((team, i) => {
                 const isYou = team.isPlayer
-                const pos = i + 1
-                const qualified = pos <= 16
+                const qualified = i < 16
                 return (
-                  <div key={team.name}
-                    className={`flex items-center justify-between px-3 py-1.5 rounded-lg ${
-                      isYou ? 'bg-green-500/10 border border-green-500/30' :
-                      qualified ? 'bg-blue-500/5' : 'bg-gray-800'
-                    }`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-black w-5 ${qualified ? 'text-blue-400' : 'text-gray-600'}`}>
-                        {pos}
-                      </span>
-                      <span className={`text-xs font-semibold truncate max-w-28 ${isYou ? 'text-green-400' : 'text-gray-300'}`}>
-                        {isYou ? `⭐ ${teamName}` : team.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-600">{team.w}V {team.d}P {team.l}S</span>
-                      <span className={`font-black ${isYou ? 'text-green-400' : qualified ? 'text-blue-400' : 'text-gray-400'}`}>
-                        {team.pts}pt
-                      </span>
-                    </div>
+                  <div key={team.name} className={`std-row ${qualified ? 'ch' : ''} ${isYou ? 'you' : ''}`}>
+                    <span className="sz" />
+                    <span className="spos">{i + 1}</span>
+                    <span className="stm">
+                      <span className="smc" style={isYou ? { background: 'var(--primary)' } : {}} />
+                      {isYou ? teamName : team.name}
+                    </span>
+                    <span className="sg">{team.w || 0}</span>
+                    <span className="sg">{team.d || 0}</span>
+                    <span className="sg">{team.l || 0}</span>
+                    <span className="spt">{team.pts}</span>
                   </div>
                 )
               })}
             </div>
-            <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-              <span className="w-3 h-3 rounded bg-blue-400 inline-block"></span> Prime 16 qualificate
+            <div className="std-legend">
+              <span><i style={{ background: 'var(--primary)' }} />Prime 16 qualificate</span>
             </div>
-          </div>
+          </>
         )}
 
-        {/* Eliminato */}
+        {/* Phase result */}
         {phase === 'eliminated' && (
-          <div className="text-center">
-            <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 mb-6">
-              <div className="text-4xl mb-2">💀</div>
-              <div className="text-red-400 font-black text-xl">Eliminato al girone!</div>
-              <div className="text-gray-400 text-sm mt-1">Posizione finale: {groupPosition}°</div>
-            </div>
-            <button
-                onClick={async () => {
-                    const sessionRes = await fetch(`/api/game/${sessionId}`)
-                    const sessionData = await sessionRes.json()
-                    const pos = sessionData.session.position || 0
-                    const scoreRes = await fetch(`/api/europa/${sessionId}/score`)
-                    const scoreData = await scoreRes.json()
-                    navigate(`/end-season/${sessionId}?fromEuropa=true&position=${pos}&score=${scoreData.score || 0}`)
-                }}
-                className="w-full bg-green-500 hover:bg-green-400 text-black font-black text-xl py-4 rounded-2xl transition-all"
-                >
-                CONTINUA →
-                </button>
+          <div style={{ margin: '16px 22px 0', background: 'color-mix(in oklab,var(--loss) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--loss) 40%,transparent)', borderRadius: 'var(--r-lg)', padding: '20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 32, marginBottom: 6 }}>💀</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, textTransform: 'uppercase', color: 'var(--loss)' }}>Eliminato al girone!</div>
+            <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>Posizione finale: {groupPosition}°</div>
           </div>
         )}
 
-        {/* Qualificato */}
         {phase === 'qualified' && (
-          <div className="text-center">
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6 mb-6">
-              <div className="text-4xl mb-2">🎉</div>
-              <div className="text-blue-400 font-black text-xl">Qualificato agli Ottavi!</div>
-              <div className="text-gray-400 text-sm mt-1">Posizione nel girone: {groupPosition}°</div>
-            </div>
-            <button
-              onClick={() => navigate(`/europa-knockout/${sessionId}`)}
-              className="w-full bg-blue-500 hover:bg-blue-400 text-white font-black text-xl py-4 rounded-2xl transition-all"
-            >
-              FASE AD ELIMINAZIONE →
-            </button>
+          <div style={{ margin: '16px 22px 0', background: 'color-mix(in oklab,var(--primary) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--primary) 40%,transparent)', borderRadius: 'var(--r-lg)', padding: '20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 32, marginBottom: 6 }}>🎉</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, textTransform: 'uppercase', color: 'var(--primary-300)' }}>Qualificato agli Ottavi!</div>
+            <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>Posizione nel girone: {groupPosition}°</div>
           </div>
         )}
 
-        {error && (
-          <div className="mt-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
-            {error}
-          </div>
+        <div style={{ height: 100 }} />
+      </div>
+
+      <div className="screen-foot">
+        {phase === 'eliminated' ? (
+          <button
+            className="btn primary"
+            onClick={async () => {
+              const r = await fetch(`/api/game/${sessionId}`)
+              const d = await r.json()
+              const pos = d.session.position || 0
+              const sr = await fetch(`/api/europa/${sessionId}/score`)
+              const sd = await sr.json()
+              navigate(`/end-season/${sessionId}?fromEuropa=true&position=${pos}&score=${sd.score || 0}`)
+            }}
+          >
+            CONTINUA ▶
+          </button>
+        ) : (
+          <button className="btn primary" onClick={() => navigate(`/europa-knockout/${sessionId}`)}>
+            FASE ELIMINATORIA ▶
+          </button>
         )}
       </div>
     </div>

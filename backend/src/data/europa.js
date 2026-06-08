@@ -1,3 +1,5 @@
+const { leagues } = require('./leagues')
+
 // Qualificazioni per campionato
 const EUROPA_QUALIFICATIONS = {
   PL: {
@@ -121,28 +123,28 @@ const STATIC_TEAMS = {
   ],
 }
 
-// Squadre dei 5 campionati per competizione (da rimpiazzare con simulate)
+// Squadre dei 5 campionati per competizione (nomi esatti come in leagues.js)
 const LEAGUE_TEAMS = {
   champions: {
-    PL: ['Liverpool', 'Chelsea', 'Tottenham', 'Arsenal', 'Newcastle', 'Manchester City'],
+    PL: ['Liverpool', 'Chelsea', 'Tottenham Hotspur', 'Arsenal', 'Newcastle United', 'Manchester City'],
     SA: ['Atalanta', 'Inter', 'Juventus', 'Napoli'],
-    BL: ['Bayern Munich', 'Dortmund', 'Eintracht Frankfurt', 'Bayer Leverkusen'],
-    LL: ['Atl. Madrid', 'Villarreal', 'Real Madrid', 'Barcelona'],
-    L1: ['PSG', 'Marseille', 'Monaco'],
+    BL: ['Bayern München', 'Borussia Dortmund', 'Eintracht Frankfurt', 'Bayer 04 Leverkusen'],
+    LL: ['Atlético de Madrid', 'Villarreal CF', 'Real Madrid', 'FC Barcelona'],
+    L1: ['Paris Saint-Germain', 'Olympique de Marseille', 'AS Monaco'],
   },
   europa: {
-    PL: ['Aston Villa', 'Nottingham'],
-    SA: ['Bologna', 'AS Roma'],
-    BL: ['Stuttgart', 'Freiburg'],
-    LL: ['Ath Bilbao', 'Celta Vigo'],
-    L1: ['Lyon', 'Lille', 'Nice'],
+    PL: ['Aston Villa', 'Nottingham Forest'],
+    SA: ['Bologna', 'Roma'],
+    BL: ['VfB Stuttgart', 'SC Freiburg'],
+    LL: ['Athletic Club de Bilbao', 'RC Celta de Vigo'],
+    L1: ['Olympique Lyonnais', 'LOSC Lille', 'OGC Nice'],
   },
   conference: {
     PL: ['Crystal Palace'],
     SA: ['Fiorentina'],
-    BL: ['Mainz'],
-    LL: ['Betis'],
-    L1: ['Strasbourg'],
+    BL: ['1. FSV Mainz 05'],
+    LL: ['Real Betis Balompié'],
+    L1: ['RC Strasbourg'],
   },
 }
 
@@ -196,10 +198,14 @@ function buildEuropaGroup(competition, playerLeague, simulatedLeagueTeams, playe
       // Riempì i restanti slot con le squadre simulate
       leagueTeams.push(...topTeams.slice(0, playerQualifies ? slots - 1 : slots))
     } else {
-      // Usa le squadre di default del campionato
+      // Usa le squadre di default del campionato con i rating reali da leagues.js
       const defaults = defaultTeams[league] || []
+      const leagueData = leagues[league]?.teams || []
       leagueTeams.push(
-        ...defaults.slice(0, slots).map(name => ({ name, rating: 75 }))
+        ...defaults.slice(0, slots).map(name => {
+          const team = leagueData.find(t => t.name === name)
+          return { name, rating: team?.strength ?? 75 }
+        })
       )
     }
   }
@@ -210,12 +216,45 @@ function buildEuropaGroup(competition, playerLeague, simulatedLeagueTeams, playe
 }
 
 /**
- * Simula il girone europeo
- * Ogni squadra gioca contro ogni altra 1 volta (35 partite ciascuna)
+ * Genera fixture casuali in formato "league phase" UEFA:
+ * ogni squadra gioca esattamente matchesPerTeam partite contro avversarie diverse
+ */
+function generateLeaguePhaseFixtures(n, matchesPerTeam) {
+  const needed = new Array(n).fill(matchesPerTeam)
+  const fixtures = []
+
+  // Tutte le coppie possibili, mescolate casualmente
+  const allPairs = []
+  for (let i = 0; i < n; i++)
+    for (let j = i + 1; j < n; j++)
+      allPairs.push([i, j])
+
+  for (let i = allPairs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[allPairs[i], allPairs[j]] = [allPairs[j], allPairs[i]]
+  }
+
+  for (const [i, j] of allPairs) {
+    if (needed[i] > 0 && needed[j] > 0) {
+      fixtures.push([i, j])
+      needed[i]--
+      needed[j]--
+    }
+  }
+
+  return fixtures
+}
+
+/**
+ * Simula la fase a gironi europea (formato UEFA league phase)
+ * Ogni squadra gioca contro 10 avversarie casuali
  * Le prime 16 si qualificano
+ * Restituisce { standings, playerOpponents }
  */
 function simulateEuropaGroup(teams, playerRating) {
-  // Inizializza classifica
+  const n = teams.length
+  const fixtures = generateLeaguePhaseFixtures(n, 10)
+
   const standings = teams.map(t => ({
     name: t.name,
     isPlayer: t.isPlayer || false,
@@ -223,51 +262,57 @@ function simulateEuropaGroup(teams, playerRating) {
     p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0,
   }))
 
-  // Simula partite (ogni coppia gioca una volta)
-  for (let i = 0; i < standings.length; i++) {
-    for (let j = i + 1; j < standings.length; j++) {
-      const home = standings[i]
-      const away = standings[j]
+  const playerOpponentIndices = []
 
-      if (home.isPlayer || away.isPlayer) continue // Le partite del giocatore si giocano con la ruota
+  for (const [i, j] of fixtures) {
+    const home = standings[i]
+    const away = standings[j]
 
-      const diff = home.rating - away.rating
-      const absDiff = Math.abs(diff)
-      const drawChance = Math.max(0.08, 0.22 - absDiff * 0.006)
-      const homeWinChance = Math.min(0.80, Math.max(0.08, 0.5 + diff * 0.025))
-
-      const r = Math.random()
-      let hg, ag
-
-      if (r < homeWinChance) {
-        hg = 1 + Math.floor(Math.random() * 3)
-        ag = Math.floor(Math.random() * hg)
-        home.w++; away.l++
-        home.pts += 3
-      } else if (r < homeWinChance + drawChance) {
-        hg = Math.floor(Math.random() * 3)
-        ag = hg
-        home.d++; away.d++
-        home.pts += 1; away.pts += 1
-      } else {
-        ag = 1 + Math.floor(Math.random() * 3)
-        hg = Math.floor(Math.random() * ag)
-        away.w++; home.l++
-        away.pts += 3
-      }
-
-      home.gf += hg; home.ga += ag; home.p++
-      away.gf += ag; away.ga += hg; away.p++
+    if (home.isPlayer || away.isPlayer) {
+      playerOpponentIndices.push(home.isPlayer ? j : i)
+      continue
     }
+
+    const diff = home.rating - away.rating
+    const absDiff = Math.abs(diff)
+    const drawChance = Math.max(0.08, 0.22 - absDiff * 0.006)
+    const homeWinChance = Math.min(0.80, Math.max(0.08, 0.5 + diff * 0.025))
+
+    const r = Math.random()
+    let hg, ag
+
+    if (r < homeWinChance) {
+      hg = 1 + Math.floor(Math.random() * 3)
+      ag = Math.floor(Math.random() * hg)
+      home.w++; away.l++
+      home.pts += 3
+    } else if (r < homeWinChance + drawChance) {
+      hg = Math.floor(Math.random() * 3)
+      ag = hg
+      home.d++; away.d++
+      home.pts += 1; away.pts += 1
+    } else {
+      ag = 1 + Math.floor(Math.random() * 3)
+      hg = Math.floor(Math.random() * ag)
+      away.w++; home.l++
+      away.pts += 3
+    }
+
+    home.gf += hg; home.ga += ag; home.p++
+    away.gf += ag; away.ga += hg; away.p++
   }
 
-  // Ordina per punti, poi differenza reti
   standings.sort((a, b) => {
     if (b.pts !== a.pts) return b.pts - a.pts
     return (b.gf - b.ga) - (a.gf - a.ga)
   })
 
-  return standings
+  const playerOpponents = playerOpponentIndices.map(idx => ({
+    name: teams[idx].name,
+    rating: teams[idx].rating,
+  }))
+
+  return { standings, playerOpponents }
 }
 
 /**

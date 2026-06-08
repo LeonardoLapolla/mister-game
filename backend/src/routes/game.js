@@ -69,10 +69,22 @@ router.post("/:id/next-season", async (req, res) => {
 
     if (!session) return res.status(404).json({ error: "Sessione non trovata" });
 
-    // Use position from body, fallback to stored session position
     const finalPosition = bodyPosition || session.position || 0;
+    const totalTeams = leagues[session.league].teams.length + 1;
+    const isRelegated = finalPosition > totalTeams - 3;
 
-    // Compute stats from actual played matches (avoids relying on frontend params)
+    // Idempotency guard: if history for this season already exists, return consistent response
+    const existingHistory = await prisma.seasonHistory.findFirst({
+      where: { sessionId: session.id, seasonNumber: session.seasonNumber }
+    });
+
+    if (existingHistory) {
+      if (existingHistory.position > totalTeams - 3) return res.json({ relegated: true });
+      if (existingHistory.seasonNumber >= MAX_SEASONS) return res.json({ maxSeasons: true });
+      return res.json({ success: true, newSeason: existingHistory.seasonNumber + 1 });
+    }
+
+    // First time: compute stats and write history
     const played = session.matches.filter(m => m.played);
     const wins = played.filter(m => m.goalsFor > m.goalsAgainst).length;
     const draws = played.filter(m => m.goalsFor === m.goalsAgainst).length;
@@ -96,20 +108,10 @@ router.post("/:id/next-season", async (req, res) => {
       }
     });
 
-    const totalTeams = leagues[session.league].teams.length;
-    const isRelegated = finalPosition > totalTeams - 3;
+    if (isRelegated) return res.json({ relegated: true });
+    if (session.seasonNumber >= MAX_SEASONS) return res.json({ maxSeasons: true });
 
-    if (isRelegated) {
-      return res.json({ relegated: true });
-    }
-
-    if (session.seasonNumber >= MAX_SEASONS) {
-      return res.json({ maxSeasons: true });
-    }
-
-    await prisma.match.deleteMany({
-      where: { sessionId: session.id }
-    });
+    await prisma.match.deleteMany({ where: { sessionId: session.id } });
 
     await prisma.session.update({
       where: { id: session.id },

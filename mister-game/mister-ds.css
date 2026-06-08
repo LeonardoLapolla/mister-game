@@ -1,0 +1,246 @@
+/* ============================================================
+   MISTER — Design System showcase
+   Token-driven: each direction = a .dir-* root that sets vars.
+   Components below consume the vars so all 3 stay coherent.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Saira+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+/* ---------- Shared competition + state accents (kept recognisable) ---------- */
+:root{
+  --champions:#2E6BFF;
+  --europa:#FF7A18;
+  --conference:#16D17A;
+}
+
+/* ======================= DIRECTION TOKENS ======================= */
+.dir-neon{
+  --bg:#06110A; --bg2:#040B07; --surface:#0E2014; --surface2:#143020;
+  --line:rgba(166,255,46,.20); --line-soft:rgba(166,255,46,.10);
+  --ink:#EAFBE6; --muted:#7FA98C;
+  --primary:#A6FF2E; --primary-ink:#06110A; --glow:#A6FF2E;
+  --win:#A6FF2E; --draw:#FFC93C; --loss:#FF4D5E;
+  --radius:18px; --radius-sm:12px;
+  --font-display:'Anton'; --font-num:'Space Mono'; --font-ui:'Archivo';
+  --disp-tr:uppercase; --disp-ls:.012em;
+  --glow-shadow:0 0 0 1px var(--line), 0 0 28px -6px var(--glow);
+}
+.dir-pro{
+  --bg:#0A0D11; --bg2:#070A0D; --surface:#141A20; --surface2:#1B232B;
+  --line:rgba(255,255,255,.09); --line-soft:rgba(255,255,255,.05);
+  --ink:#EAF1F4; --muted:#8A98A6;
+  --primary:#16C784; --primary-ink:#04130D; --glow:#16C784;
+  --win:#16C784; --draw:#F5B43C; --loss:#FB5566;
+  --radius:22px; --radius-sm:14px;
+  --font-display:'Saira Condensed'; --font-num:'DM Mono'; --font-ui:'Hanken Grotesk';
+  --disp-tr:uppercase; --disp-ls:.002em;
+  --glow-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 18px 40px -22px rgba(0,0,0,.9);
+}
+.dir-bold{
+  --bg:#141210; --bg2:#0E0C0A; --surface:#211D18; --surface2:#2A251E;
+  --line:rgba(244,239,230,.13); --line-soft:rgba(244,239,230,.07);
+  --ink:#F4EFE6; --muted:#A99E8C;
+  --primary:#2BE08B; --primary-ink:#0E1B14; --glow:#2BE08B;
+  --win:#2BE08B; --draw:#F2C14E; --loss:#F0596A;
+  --radius:6px; --radius-sm:4px;
+  --font-display:'Oswald'; --font-num:'IBM Plex Mono'; --font-ui:'Hanken Grotesk';
+  --disp-tr:uppercase; --disp-ls:.0em;
+  --glow-shadow:0 0 0 1px var(--line);
+}
+
+/* ======================= ARTBOARD SHELL ======================= */
+.ms-root{
+  width:100%; height:100%;
+  font-family:var(--font-ui);
+  color:var(--ink);
+  background:
+    radial-gradient(120% 80% at 80% -10%, color-mix(in oklab, var(--primary) 9%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+  padding:44px 46px 50px;
+  box-sizing:border-box;
+  -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column; gap:34px;
+}
+.ms-root *{box-sizing:border-box}
+
+/* ---- Header band ---- */
+.dir-head{display:flex; justify-content:space-between; align-items:flex-end; gap:24px;
+  padding-bottom:26px; border-bottom:1px solid var(--line);}
+.dir-kicker{font-family:var(--font-num); font-size:12px; letter-spacing:.34em; text-transform:uppercase;
+  color:var(--primary); margin:0 0 10px;}
+.dir-name{font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:var(--disp-ls);
+  font-weight:700; font-size:74px; line-height:.9; margin:0; color:var(--ink); white-space:pre-line;}
+.dir-tag{color:var(--muted); font-size:15px; max-width:46ch; margin:14px 0 0; line-height:1.5;}
+.dir-chips{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; max-width:280px;}
+.chip{font-family:var(--font-num); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  padding:7px 11px; border-radius:999px; border:1px solid var(--line);
+  background:var(--surface); color:var(--muted);}
+.chip.on{background:var(--primary); color:var(--primary-ink); border-color:transparent; font-weight:700;}
+
+/* ---- generic section heading ---- */
+.spec-h{display:flex; align-items:center; gap:10px; margin:0 0 16px;
+  font-family:var(--font-num); font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--muted);}
+.spec-h::before{content:""; width:18px; height:3px; border-radius:2px; background:var(--primary);}
+
+.spec-cols{display:grid; grid-template-columns:1fr 1fr; gap:34px;}
+
+/* ---- Palette ---- */
+.sw-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px;}
+.sw{border:1px solid var(--line-soft); border-radius:var(--radius-sm); overflow:hidden; background:var(--surface);}
+.sw .chip-color{height:62px; display:block;}
+.sw .chip-meta{padding:9px 10px;}
+.sw .chip-name{font-size:11.5px; font-weight:700; letter-spacing:.02em;}
+.sw .chip-hex{font-family:var(--font-num); font-size:10.5px; color:var(--muted); margin-top:3px;}
+.sw-grid.acc{grid-template-columns:repeat(6,1fr); margin-top:12px;}
+
+/* ---- Typography spec ---- */
+.type-display{font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:var(--disp-ls);
+  font-weight:700; font-size:96px; line-height:.86; color:var(--ink); margin:0;}
+.type-meta{font-family:var(--font-num); font-size:11px; color:var(--muted); letter-spacing:.04em; margin:14px 0 22px;}
+.type-scale{display:flex; flex-direction:column; gap:14px;}
+.type-row{display:flex; align-items:baseline; gap:16px; border-top:1px dashed var(--line-soft); padding-top:12px;}
+.type-row .lbl{font-family:var(--font-num); font-size:10px; color:var(--muted); width:78px; flex:0 0 auto; letter-spacing:.05em;}
+.t-h1{font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:var(--disp-ls); font-size:34px; font-weight:700;}
+.t-h2{font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:var(--disp-ls); font-size:24px; font-weight:600; color:var(--muted);}
+.t-body{font-family:var(--font-ui); font-size:15px; line-height:1.5;}
+.t-num{font-family:var(--font-num); font-size:30px; font-weight:700; letter-spacing:.02em;}
+.t-num .u{color:var(--primary);}
+
+/* ======================= PHONE / WHEEL SCREEN ======================= */
+.phone-col{display:flex; flex-direction:column; align-items:center; gap:14px;}
+.ms-phone{width:390px; background:linear-gradient(180deg,var(--surface),var(--bg));
+  border:1px solid var(--line); border-radius:42px; padding:13px;
+  box-shadow:0 40px 80px -40px #000, var(--glow-shadow);}
+.ms-screen{border-radius:30px; background:linear-gradient(180deg,var(--bg2),var(--bg));
+  border:1px solid var(--line-soft); padding:20px 18px 24px; position:relative; overflow:hidden;}
+.ms-screen::before{content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(90% 50% at 50% 0%, color-mix(in oklab,var(--primary) 10%, transparent), transparent 70%);}
+.ms-topbar{display:flex; justify-content:space-between; align-items:center; position:relative;}
+.ms-team{font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:var(--disp-ls);
+  font-size:24px; line-height:1; font-weight:700;}
+.ms-team small{display:block; font-family:var(--font-ui); font-size:10px; letter-spacing:.18em; color:var(--muted); margin-bottom:3px; text-transform:uppercase;}
+.ms-budget{display:flex; align-items:center; gap:7px; background:var(--surface); border:1px solid var(--line);
+  border-radius:999px; padding:7px 12px;}
+.ms-budget b{font-family:var(--font-num); font-size:14px; font-weight:700; color:var(--primary);}
+.ms-budget span{font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);}
+
+.ms-steps{display:flex; gap:6px; margin:16px 0 4px; position:relative;}
+.ms-steps .st{flex:1; height:4px; border-radius:3px; background:var(--surface2);}
+.ms-steps .st.done{background:var(--primary);}
+.ms-steps .st.now{background:var(--primary); box-shadow:0 0 12px -1px var(--glow);}
+
+.ms-prompt{font-family:var(--font-num); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--muted); text-align:center; margin:14px 0 2px; position:relative;}
+.ms-prompt b{color:var(--ink);}
+
+.ms-wheelwrap{display:grid; place-items:center; padding:6px 0 2px; position:relative;}
+canvas.mister-wheel{width:300px; height:300px; cursor:pointer; touch-action:none;}
+
+.ms-spin{margin-top:14px; width:100%; border:none; cursor:pointer;
+  font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:.06em; font-weight:700;
+  font-size:22px; color:var(--primary-ink); background:var(--primary);
+  border-radius:var(--radius); padding:15px; position:relative;
+  box-shadow:0 12px 30px -10px var(--glow);}
+.ms-spin small{display:block; font-family:var(--font-num); font-size:10px; letter-spacing:.14em; opacity:.6; margin-top:2px; text-transform:uppercase;}
+.phone-caption{font-family:var(--font-num); font-size:11px; color:var(--muted); letter-spacing:.05em;}
+
+/* ======================= COMPONENTS COLUMN ======================= */
+.comp-col{display:flex; flex-direction:column; gap:18px;}
+.comp-stack{display:flex; flex-direction:column; gap:14px;}
+
+/* ---- Result banner ---- */
+.ms-banner{border-radius:var(--radius); padding:20px 22px; position:relative; overflow:hidden;
+  background:linear-gradient(110deg, color-mix(in oklab,var(--win) 26%, var(--surface)), var(--surface));
+  border:1px solid color-mix(in oklab,var(--win) 40%, transparent);
+  box-shadow:0 0 36px -14px var(--win);}
+.ms-banner .bk{position:absolute; right:-6px; top:-26px; font-family:var(--font-display);
+  text-transform:var(--disp-tr); font-size:150px; line-height:1; font-weight:700;
+  color:color-mix(in oklab,var(--win) 26%, transparent); pointer-events:none;}
+.ms-banner .res{font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:.02em;
+  font-size:46px; line-height:.92; font-weight:700; color:var(--win); position:relative;}
+.ms-banner .vs{position:relative; color:var(--ink); font-size:14px; margin-top:4px; opacity:.9;}
+.ms-banner .score{position:relative; font-family:var(--font-num); font-weight:700; font-size:30px; margin-top:8px;}
+.banner-mini-row{display:flex; gap:10px;}
+.ms-mini{flex:1; border-radius:var(--radius-sm); padding:12px 14px; display:flex; align-items:center; gap:10px;
+  background:var(--surface); border:1px solid var(--line-soft);}
+.ms-mini .dot{width:30px; height:30px; border-radius:9px; display:grid; place-items:center;
+  font-family:var(--font-display); font-size:18px; color:#0a0a0a;}
+.ms-mini .txt{font-size:12px; line-height:1.3;}
+.ms-mini .txt b{display:block; font-family:var(--font-display); text-transform:uppercase; font-size:14px; letter-spacing:.02em;}
+.ms-mini .txt span{font-family:var(--font-num); font-size:10px; color:var(--muted);}
+
+/* ---- Match card ---- */
+.ms-match{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px;}
+.ms-match .mh{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+.ms-match .opp{display:flex; align-items:center; gap:11px;}
+.ms-match .crest{width:38px; height:38px; border-radius:11px; background:var(--surface2);
+  border:1px solid var(--line); display:grid; place-items:center; font-family:var(--font-display); font-size:17px; color:var(--primary);}
+.ms-match .opp b{font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:var(--disp-ls); font-size:20px; line-height:1;}
+.ms-match .opp small{font-family:var(--font-num); font-size:10px; color:var(--muted); letter-spacing:.08em;}
+.ha{font-family:var(--font-num); font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:5px 9px;
+  border-radius:999px; background:var(--surface2); color:var(--ink); border:1px solid var(--line);}
+.ms-match .forza{display:flex; align-items:center; gap:8px; margin-bottom:14px;}
+.ms-match .forza .lbl{font-family:var(--font-num); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);}
+.bars{display:flex; gap:3px;}
+.bars i{width:7px; height:13px; border-radius:2px; background:var(--surface2);}
+.bars i.f{background:var(--primary);}
+/* prob bar */
+.prob{height:30px; border-radius:8px; overflow:hidden; display:flex; border:1px solid var(--line-soft);}
+.prob span{display:flex; align-items:center; justify-content:center; font-family:var(--font-num);
+  font-size:11px; font-weight:700; color:#08110b;}
+.prob .pv{background:var(--win);}
+.prob .pp{background:var(--draw);}
+.prob .ps{background:var(--loss); color:#fff;}
+.prob-key{display:flex; gap:14px; margin-top:8px; font-family:var(--font-num); font-size:10px; color:var(--muted); letter-spacing:.06em;}
+.prob-key i{width:8px; height:8px; border-radius:2px; display:inline-block; margin-right:5px; vertical-align:middle;}
+
+/* ---- Standings ---- */
+.ms-standings{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+.std-h{display:grid; grid-template-columns:30px 1fr 34px 38px; gap:8px; padding:11px 16px;
+  font-family:var(--font-num); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+  border-bottom:1px solid var(--line-soft);}
+.std-row{display:grid; grid-template-columns:30px 1fr 34px 38px; gap:8px; align-items:center; padding:10px 16px;
+  border-bottom:1px solid var(--line-soft); position:relative;}
+.std-row:last-child{border-bottom:none;}
+.std-row .zone{position:absolute; left:0; top:0; bottom:0; width:4px;}
+.std-row.z-ch .zone{background:var(--champions);}
+.std-row.z-el .zone{background:var(--europa);}
+.std-row.z-co .zone{background:var(--conference);}
+.std-row.z-rel .zone{background:var(--loss);}
+.std-row .pos{font-family:var(--font-num); font-size:13px; font-weight:700; color:var(--muted);}
+.std-row .team{font-family:var(--font-ui); font-weight:600; font-size:14px; display:flex; align-items:center; gap:9px;}
+.std-row .team .mc{width:18px; height:18px; border-radius:5px; background:var(--surface2); flex:0 0 auto;}
+.std-row .pl{font-family:var(--font-num); font-size:12px; color:var(--muted); text-align:center;}
+.std-row .pts{font-family:var(--font-num); font-size:15px; font-weight:700; text-align:right;}
+.std-row.you{background:color-mix(in oklab,var(--primary) 13%, transparent);}
+.std-row.you .pos, .std-row.you .pts{color:var(--primary);}
+.std-row.you .team{color:var(--ink);}
+.std-legend{display:flex; flex-wrap:wrap; gap:12px; padding:11px 16px; border-top:1px solid var(--line-soft);
+  font-family:var(--font-num); font-size:9.5px; letter-spacing:.05em; color:var(--muted);}
+.std-legend i{width:8px; height:8px; border-radius:2px; display:inline-block; margin-right:5px; vertical-align:middle;}
+
+/* ---- Stats bar ---- */
+.ms-stats{display:grid; grid-template-columns:repeat(5,1fr); background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+.ms-stats .cell{padding:14px 8px; text-align:center; border-right:1px solid var(--line-soft);}
+.ms-stats .cell:last-child{border-right:none;}
+.ms-stats .num{font-family:var(--font-num); font-size:26px; font-weight:700; line-height:1; color:var(--ink);}
+.ms-stats .cell.hl .num{color:var(--primary);}
+.ms-stats .cap{font-family:var(--font-num); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:6px;}
+
+/* ---- buttons row ---- */
+.btn-row{display:flex; gap:10px;}
+.ms-btn{flex:1; border:none; cursor:pointer; border-radius:var(--radius-sm); padding:13px;
+  font-family:var(--font-display); text-transform:var(--disp-tr); letter-spacing:.04em; font-weight:700; font-size:16px;}
+.ms-btn.primary{background:var(--primary); color:var(--primary-ink); box-shadow:0 10px 26px -12px var(--glow);}
+.ms-btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+
+/* competition tickets */
+.comp-row{display:flex; gap:10px;}
+.comp-tk{flex:1; border-radius:var(--radius-sm); padding:12px 13px; color:#fff; position:relative; overflow:hidden;
+  border:1px solid rgba(255,255,255,.14);}
+.comp-tk b{font-family:var(--font-display); text-transform:uppercase; font-size:15px; letter-spacing:.02em; display:block;}
+.comp-tk span{font-family:var(--font-num); font-size:9px; letter-spacing:.1em; opacity:.85; text-transform:uppercase;}
+.comp-tk.ch{background:linear-gradient(135deg,var(--champions),#1b3aa0);}
+.comp-tk.el{background:linear-gradient(135deg,var(--europa),#a8420a);}
+.comp-tk.co{background:linear-gradient(135deg,var(--conference),#0a7a48);}
