@@ -60,6 +60,7 @@ const STATIC_TEAMS = {
     { name: 'Galatasaray', rating: 79 },
     { name: 'FC Copenhagen', rating: 71 },
     { name: 'Club Brugge KV', rating: 74 },
+    { name: 'Girona FC', rating: 74 },
   ],
   europa: [
     { name: 'Young Boys', rating: 71 },
