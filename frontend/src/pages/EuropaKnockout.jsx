@@ -16,10 +16,10 @@ const COMP_INFO = {
 }
 
 const ROUND_LABELS = {
-  R16: 'Ottavi di Finale',
-  QF: 'Quarti di Finale',
-  SF: 'Semifinali',
-  Final: 'Finale',
+  R16: 'Round of 16',
+  QF: 'Quarter-Finals',
+  SF: 'Semi-Finals',
+  Final: 'Final',
 }
 
 const SEG_COLORS_MATCH = { win: '#16C784', draw: '#F5B43C', loss: '#FB5566' }
@@ -31,9 +31,9 @@ function MatchWheel({ probs, onResult, locked, onLock }) {
   const [spinning, setSpinning] = useState(false)
 
   const items = [
-    { label: 'VITTORIA', result: 'win', color: SEG_COLORS_MATCH.win, prob: probs.win },
-    { label: 'PAREGGIO', result: 'draw', color: SEG_COLORS_MATCH.draw, prob: probs.draw },
-    { label: 'SCONFITTA', result: 'loss', color: SEG_COLORS_MATCH.loss, prob: probs.loss },
+    { label: 'WIN', result: 'win', color: SEG_COLORS_MATCH.win, prob: probs.win },
+    { label: 'DRAW', result: 'draw', color: SEG_COLORS_MATCH.draw, prob: probs.draw },
+    { label: 'LOSS', result: 'loss', color: SEG_COLORS_MATCH.loss, prob: probs.loss },
   ]
 
   useEffect(() => { drawWheel(angleRef.current) }, [probs])
@@ -113,7 +113,7 @@ function MatchWheel({ probs, onResult, locked, onLock }) {
       <button onClick={spin} disabled={spinning || locked}
         className="btn primary btn-sm"
         style={{ opacity: (spinning || locked) ? 0.45 : 1, width: 'auto', minWidth: 140 }}>
-        {spinning ? 'GIRANDO...' : locked ? 'GIOCATA ✓' : 'GIRA!'}
+        {spinning ? 'SPINNING...' : locked ? 'PLAYED ✓' : 'SPIN!'}
       </button>
     </div>
   )
@@ -199,7 +199,7 @@ export default function EuropaKnockout() {
   }
 
   if (loading) {
-    return <div className="mister-loading"><div>Caricamento...</div></div>
+    return <div className="mister-loading"><div>Loading...</div></div>
   }
 
   const competition = europaState?.competition
@@ -221,13 +221,13 @@ export default function EuropaKnockout() {
           <div className={`result-banner ${lastResult.outcome}`}>
             <span className="rbk">{lastResult.outcome === 'win' ? 'W' : lastResult.outcome === 'draw' ? 'D' : 'L'}</span>
             <div className="rres">
-              {lastResult.outcome === 'win' ? 'Vittoria' : lastResult.outcome === 'draw' ? 'Ai Rigori' : 'Sconfitta'}
+              {lastResult.outcome === 'win' ? 'Win' : lastResult.outcome === 'draw' ? 'On Penalties' : 'Defeat'}
             </div>
             <div className="rvs">{teamName} vs {lastResult.opponent}</div>
             <div className="rscore">{lastResult.goalsFor} – {lastResult.goalsAgainst}</div>
             {!lastResult.eliminated && lastResult.nextRound && (
               <div style={{ color: 'var(--ink-dim)', fontSize: 13, marginTop: 10 }}>
-                Accedi ai {ROUND_LABELS[lastResult.nextRound]}!
+                Advance to {ROUND_LABELS[lastResult.nextRound]}!
               </div>
             )}
           </div>
@@ -254,13 +254,13 @@ export default function EuropaKnockout() {
                   </div>
                   <div>
                     <b>{nextMatch.opponentName || (nextMatch.home === 'La Tua Squadra' ? nextMatch.away : nextMatch.home)}</b>
-                    <small>{roundLabel} · Eliminazione diretta</small>
+                    <small>{roundLabel} · Knockout</small>
                   </div>
                 </div>
               </div>
 
               <div className="forza">
-                <span className="flbl">Forza</span>
+                <span className="flbl">Strength</span>
                 <div className="bars">
                   {[1,2,3,4,5].map(n => <i key={n} className={n <= forza ? 'f' : ''} />)}
                 </div>
@@ -272,9 +272,9 @@ export default function EuropaKnockout() {
                 <span className="ps" style={{ width: `${probs.loss}%` }}>{probs.loss}%</span>
               </div>
               <div className="prob-key">
-                <span><i style={{ background: 'var(--win)' }} />Vittoria</span>
-                <span><i style={{ background: 'var(--draw)' }} />Rigori</span>
-                <span><i style={{ background: 'var(--loss)' }} />Sconfitta</span>
+                <span><i style={{ background: 'var(--win)' }} />Win</span>
+                <span><i style={{ background: 'var(--draw)' }} />Penalties</span>
+                <span><i style={{ background: 'var(--loss)' }} />Defeat</span>
               </div>
             </div>
 
@@ -287,7 +287,7 @@ export default function EuropaKnockout() {
         {/* Bracket */}
         {currentRoundMatches.length > 0 && phase === 'playing' && (
           <>
-            <div className="section-title">Tabellone — {roundLabel}</div>
+            <div className="section-title">Bracket — {roundLabel}</div>
             <div style={{ padding: '0 22px' }}>
               {currentRoundMatches.map((match, i) => {
                 const isYou = match.isPlayerMatch
@@ -314,12 +314,12 @@ export default function EuropaKnockout() {
         {phase === 'eliminated' && !lastResult && (
           <div style={{ margin: '16px 22px 0', background: 'color-mix(in oklab,var(--loss) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--loss) 40%,transparent)', borderRadius: 'var(--r-lg)', padding: '24px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: 36, marginBottom: 8 }}>💀</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, textTransform: 'uppercase', color: 'var(--loss)' }}>Eliminato!</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, textTransform: 'uppercase', color: 'var(--loss)' }}>Eliminated!</div>
             <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>
-              Sei uscito {ROUND_LABELS[europaState?.finalRound] ? `agli ${ROUND_LABELS[europaState.finalRound]}` : 'dalla competizione'}
+              You were eliminated {ROUND_LABELS[europaState?.finalRound] ? `at the ${ROUND_LABELS[europaState.finalRound]}` : 'from the competition'}
             </div>
             <div style={{ fontFamily: 'var(--font-num)', fontWeight: 700, fontSize: 18, color: 'var(--primary)', marginTop: 12 }}>
-              +{europaState?.europaScore || 0} punti bonus
+              +{europaState?.europaScore || 0} bonus points
             </div>
           </div>
         )}
@@ -328,10 +328,10 @@ export default function EuropaKnockout() {
         {phase === 'winner' && !lastResult && (
           <div style={{ margin: '16px 22px 0', background: 'color-mix(in oklab,var(--draw) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--draw) 40%,transparent)', borderRadius: 'var(--r-lg)', padding: '24px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 8 }}>🏆</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, textTransform: 'uppercase', color: 'var(--draw)' }}>HAI VINTO!</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, textTransform: 'uppercase', color: 'var(--draw)' }}>YOU WON!</div>
             <div style={{ color: 'var(--ink-dim)', fontSize: 16, marginTop: 4 }}>{info.name}</div>
             <div style={{ fontFamily: 'var(--font-num)', fontWeight: 700, fontSize: 18, color: 'var(--primary)', marginTop: 12 }}>
-              +{europaState?.europaScore || 0} punti bonus
+              +{europaState?.europaScore || 0} bonus points
             </div>
           </div>
         )}
@@ -347,7 +347,7 @@ export default function EuropaKnockout() {
 
       {(phase === 'eliminated' || phase === 'winner') && !lastResult && (
         <div className="screen-foot">
-          <button onClick={handleContinue} className="btn primary">CONTINUA ▶</button>
+          <button onClick={handleContinue} className="btn primary">CONTINUE ▶</button>
         </div>
       )}
     </div>

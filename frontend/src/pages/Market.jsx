@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
-const POSITION_LABELS = { GK: 'Portiere', DEF: 'Difensore', MID: 'Centrocampista', ATT: 'Attaccante' }
+const POSITION_LABELS = { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', ATT: 'Forward' }
 const POSITION_ORDER = ['GK', 'DEF', 'MID', 'ATT']
 
 const FORMATION_SLOTS = {
@@ -35,7 +35,7 @@ export default function Market() {
       setAvailablePlayers(data.players)
       setSession(data.session)
     } catch (err) {
-      setError('Errore nel caricamento del mercato')
+      setError('Error loading market')
     } finally {
       setLoading(false)
     }
@@ -81,7 +81,7 @@ export default function Market() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-gray-400 text-xl">Caricamento mercato...</div>
+        <div className="text-gray-400 text-xl">Loading market...</div>
       </div>
     )
   }
@@ -106,12 +106,12 @@ export default function Market() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-black text-white">Mercato</h1>
+            <h1 className="text-3xl font-black text-white">Transfer Market</h1>
             <p className="text-gray-500">{session.nickname} · {session.formation} · {session.league}</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-black text-green-400">{budgetRimasto}M</div>
-            <div className="text-gray-500 text-sm">budget rimasto</div>
+            <div className="text-gray-500 text-sm">budget remaining</div>
           </div>
         </div>
 
@@ -120,7 +120,7 @@ export default function Market() {
           {/* Rosa attuale */}
           <div className="lg:col-span-1">
             <h2 className="text-lg font-bold text-white mb-4">
-              La tua rosa ({session.players.length}/{totalSlots})
+              Your squad ({session.players.length}/{totalSlots})
             </h2>
             {POSITION_ORDER.map((pos) => (
               <div key={pos} className="mb-4">
@@ -137,13 +137,13 @@ export default function Market() {
                       onClick={() => sellPlayer(p.name)}
                       className="text-red-400 hover:text-red-300 text-xs font-bold ml-2"
                     >
-                      VENDI
+                      SELL
                     </button>
                   </div>
                 ))}
                 {Array.from({ length: slots[pos] - playersByPosition(pos).length }).map((_, i) => (
                   <div key={i} className="flex items-center bg-gray-900/50 border border-dashed border-gray-800 rounded-lg px-3 py-2 mb-1">
-                    <div className="text-gray-700 text-sm">Slot vuoto</div>
+                    <div className="text-gray-700 text-sm">Empty slot</div>
                   </div>
                 ))}
               </div>
@@ -160,7 +160,7 @@ export default function Market() {
                 onClick={() => navigate(`/season/${sessionId}`)}
                 className="w-full mt-4 bg-green-500 hover:bg-green-400 text-black font-black py-3 rounded-xl transition-all hover:scale-105 active:scale-95"
               >
-                INIZIA LA STAGIONE →
+                START SEASON →
               </button>
             )}
           </div>
@@ -178,7 +178,7 @@ export default function Market() {
                       : 'bg-gray-900 text-gray-400 hover:bg-gray-800'
                   }`}
                 >
-                  {pos === 'ALL' ? 'Tutti' : POSITION_LABELS[pos]}
+                  {pos === 'ALL' ? 'All' : POSITION_LABELS[pos]}
                 </button>
               ))}
             </div>
@@ -217,7 +217,7 @@ export default function Market() {
                         disabled={disabled}
                         className="bg-green-500 hover:bg-green-400 disabled:bg-gray-800 disabled:text-gray-600 text-black font-bold px-3 py-1 rounded-lg text-sm transition-all"
                       >
-                        {buying === p.name ? '...' : 'ACQUISTA'}
+                        {buying === p.name ? '...' : 'BUY'}
                       </button>
                     </div>
                   </div>

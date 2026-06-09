@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
 const BUDGETS = [
-  { value: 30, label: '30M', color: '#ef4444', description: 'Massimo punteggio' },
-  { value: 50, label: '50M', color: '#f59e0b', description: 'Equilibrato' },
-  { value: 80, label: '80M', color: '#3b82f6', description: 'Sfidante' },
-  { value: 100, label: '100M', color: '#22c55e', description: 'Punteggio base' },
+  { value: 30, label: '30M', color: '#ef4444', description: 'Max score' },
+  { value: 50, label: '50M', color: '#f59e0b', description: 'Balanced' },
+  { value: 80, label: '80M', color: '#3b82f6', description: 'Challenging' },
+  { value: 100, label: '100M', color: '#22c55e', description: 'Base score' },
 ]
 
 const FORMATIONS = [
@@ -26,7 +26,7 @@ const LEAGUES = [
 ]
 
 const POSITION_ORDER = ['GK', 'DEF', 'MID', 'ATT']
-const POSITION_LABELS = { GK: 'Portieri', DEF: 'Difensori', MID: 'Centrocampisti', ATT: 'Attaccanti' }
+const POSITION_LABELS = { GK: 'Goalkeepers', DEF: 'Defenders', MID: 'Midfielders', ATT: 'Forwards' }
 
 const BUDGET_FILTERS = {
   100: (p) => p.rating >= 78,
@@ -177,7 +177,7 @@ function SpinWheel({ items, onResult, locked, onLock }) {
         className="btn primary btn-sm"
         style={{ opacity: (spinning || locked || items.length === 0) ? 0.45 : 1, width: 'auto', minWidth: 140 }}
       >
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
+        {spinning ? 'SPINNING...' : locked ? 'SPUN ✓' : 'SPIN!'}
       </button>
     </div>
   )
@@ -185,11 +185,11 @@ function SpinWheel({ items, onResult, locked, onLock }) {
 
 const STEPS = ['league', 'budget', 'formation', 'nickname', 'players']
 const STEP_LABELS = {
-  league: 'Campionato',
+  league: 'League',
   budget: 'Budget',
-  formation: 'Modulo',
-  nickname: 'Nome squadra',
-  players: 'Giocatori',
+  formation: 'Formation',
+  nickname: 'Team name',
+  players: 'Players',
 }
 
 export default function Wheel() {
@@ -328,7 +328,7 @@ export default function Wheel() {
       }
       navigate(`/squad/${sessionId}`)
     } catch (err) {
-      setError('Errore nel salvataggio della rosa')
+      setError('Error saving squad')
     } finally {
       setLoading(false)
     }
@@ -359,10 +359,10 @@ export default function Wheel() {
       <div className="setup-prompt">
         <div className="lbl">{STEP_LABELS[step]}</div>
         <h2>
-          {step === 'league' && 'Scegli il campionato'}
-          {step === 'budget' && 'Budget a disposizione'}
-          {step === 'formation' && 'Modulo di gioco'}
-          {step === 'nickname' && 'Nome della squadra'}
+          {step === 'league' && 'Choose your league'}
+          {step === 'budget' && 'Available budget'}
+          {step === 'formation' && 'Formation'}
+          {step === 'nickname' && 'Team name'}
           {step === 'players' && `${POSITION_LABELS[currentPosition]} — ${currentPositionCount}/${currentPositionSlots}`}
         </h2>
       </div>
@@ -378,7 +378,7 @@ export default function Wheel() {
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="Nome squadra..."
+              placeholder="Team name..."
               maxLength={20}
               className="name-input"
               style={{ textAlign: 'center' }}
@@ -394,7 +394,7 @@ export default function Wheel() {
               className="btn primary"
               style={{ opacity: (!nickname.trim() || loading) ? 0.4 : 1 }}
             >
-              {loading ? 'Caricamento...' : 'INIZIA A GIRARE ▶'}
+              {loading ? 'Loading...' : 'START SPINNING ▶'}
             </button>
           </div>
         </div>
@@ -428,8 +428,8 @@ export default function Wheel() {
                 </b>
                 <span>
                   {step === 'budget' && result.description}
-                  {step === 'formation' && 'Modulo'}
-                  {step === 'league' && 'Campionato'}
+                  {step === 'formation' && 'Formation'}
+                  {step === 'league' && 'League'}
                 </span>
               </div>
             )}
@@ -444,7 +444,7 @@ export default function Wheel() {
             {/* Manual league choice */}
             {step === 'league' && !locked && (
               <div style={{ padding: '16px 22px 0' }}>
-                <div className="section-title" style={{ paddingLeft: 0 }}>oppure scegli tu</div>
+                <div className="section-title" style={{ paddingLeft: 0 }}>or choose yourself</div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {LEAGUES.map(l => (
                     <button
@@ -464,7 +464,7 @@ export default function Wheel() {
             {step === 'players' && squad.length > 0 && (
               <div style={{ padding: '16px 22px 0' }}>
                 <div className="section-title" style={{ paddingLeft: 0 }}>
-                  Rosa ({squad.length}/{Object.values(slots).reduce((a, b) => a + b, 0)})
+                  Squad ({squad.length}/{Object.values(slots).reduce((a, b) => a + b, 0)})
                 </div>
                 <div className="roster" style={{ padding: 0 }}>
                   {squad.map((p, i) => (
@@ -480,7 +480,7 @@ export default function Wheel() {
 
             {loading && step === 'players' && (
               <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '12px 0', fontFamily: 'var(--font-num)', fontSize: 12 }}>
-                Salvataggio rosa in corso...
+                Saving squad...
               </div>
             )}
           </div>
@@ -489,7 +489,7 @@ export default function Wheel() {
           {result && step !== 'players' && (
             <div className="screen-foot">
               <button onClick={nextStep} className="btn primary">
-                {step === 'formation' ? 'SCEGLI IL NOME ▶' : 'AVANTI ▶'}
+                {step === 'formation' ? 'CHOOSE YOUR NAME ▶' : 'NEXT ▶'}
               </button>
             </div>
           )}

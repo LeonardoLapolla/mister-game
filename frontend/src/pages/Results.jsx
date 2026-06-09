@@ -41,7 +41,7 @@ export default function Results() {
   }
 
   if (!guardPassed || loading) {
-    return <div className="mister-loading"><div>Calcolo risultati...</div></div>
+    return <div className="mister-loading"><div>Calculating results...</div></div>
   }
 
   if (error) {
@@ -88,15 +88,15 @@ export default function Results() {
             <span>{teamName}</span>
           </div>
           <div className="finish-score">
-            <span>Punteggio stagione</span>
+            <span>Season score</span>
             <b>{data.finalScore}</b>
           </div>
         </div>
 
         {/* Standings */}
-        <div className="section-title">Classifica finale</div>
+        <div className="section-title">Final standings</div>
         <div className="std">
-          <div className="std-h"><span>#</span><span>Squadra</span><span>V</span><span>P</span><span>S</span><span>Pt</span></div>
+          <div className="std-h"><span>#</span><span>Team</span><span>W</span><span>D</span><span>L</span><span>Pts</span></div>
           {data.standings.map((team, i) => {
             const isYou = team.name === 'La Tua Squadra'
             const pos = i + 1
@@ -122,14 +122,14 @@ export default function Results() {
           <span><i style={{ background: 'var(--champions)' }} />Champions</span>
           <span><i style={{ background: 'var(--europa)' }} />Europa</span>
           <span><i style={{ background: 'var(--conference)' }} />Conference</span>
-          <span><i style={{ background: 'var(--loss)' }} />Retroc.</span>
+          <span><i style={{ background: 'var(--loss)' }} />Rel.</span>
         </div>
 
         <div style={{ height: 100 }} />
       </div>
 
       <div className="screen-foot">
-        <button onClick={handleContinue} className="btn primary">CONTINUA ▶</button>
+        <button onClick={handleContinue} className="btn primary">CONTINUE ▶</button>
       </div>
     </div>
   )

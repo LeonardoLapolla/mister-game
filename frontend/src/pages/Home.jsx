@@ -32,7 +32,7 @@ export default function Home() {
           </div>
 
           <p className="sub anim-up" style={{ '--d': '.35s' }}>
-            Crea la tua squadra. Scegli il campionato. Diventa leggenda.
+            Build your squad. Pick your league. Become a legend.
           </p>
         </div>
 
@@ -42,14 +42,14 @@ export default function Home() {
             style={{ '--d': '.45s' }}
             onClick={handleStart}
           >
-            INIZIA ORA ▶
+            START NOW ▶
           </button>
           <div className="meta">
-            <span>5 campionati</span>
+            <span>5 leagues</span>
             <span>·</span>
-            <span>38 partite</span>
+            <span>38 matches</span>
             <span>·</span>
-            <span>∞ sfide</span>
+            <span>∞ challenges</span>
           </div>
         </div>
       </div>

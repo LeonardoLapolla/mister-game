@@ -19,17 +19,17 @@ const BUDGET_OPTIONS = [
   { value: 50, label: '50M', minRating: 78, maxRating: 99, color: '#0EA5E9' },
 ]
 
-const ROLE_LABELS = { GK: 'Portiere', DEF: 'Difensore', MID: 'Centrocampista', ATT: 'Attaccante' }
+const ROLE_LABELS = { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', ATT: 'Forward' }
 
 const TICKER_NEWS = [
-  'Secondo indiscrezioni, trattativa avanzata tra un top club e un bomber della Serie A',
-  'Il Real Madrid monitora un giovane talento del Napoli: offerta in arrivo?',
-  'Accordo vicino tra Milan e un attaccante della Bundesliga · agente a Milano',
-  "L'Inter valuta lo svincolato per rinforzare la difesa a gennaio",
-  'La Roma tratta con il PSG per uno scambio di centrocampisti',
-  'Colpo in entrata per il Napoli: sirene dalla Premier League per il 10',
-  'Juventus: contatti con il Chelsea per un esterno di livello internazionale',
-  'Trattativa in stallo tra Lazio e un club francese · si attende risposta',
+  'Sources claim advanced talks between a top club and a Serie A striker',
+  'Real Madrid monitoring a young Napoli talent: bid incoming?',
+  'Deal close between Milan and a Bundesliga forward · agent in Milan',
+  'Inter weighing a free agent to bolster defence in January',
+  'Roma in talks with PSG over a midfielder swap',
+  'Napoli incoming: Premier League interest in their number 10',
+  'Juventus: contact with Chelsea over a wide player of international calibre',
+  'Talks stalled between Lazio and a French club · awaiting response',
 ]
 
 const SEG_COLORS = [
@@ -52,7 +52,7 @@ function DeadlineBar({ heading }) {
       <span className="mkt-live"><i></i>LIVE</span>
       <span className="mkt-bar-title">{heading}</span>
       <span className="mkt-clock">
-        <span className="mkt-clock-k">Gong</span>
+        <span className="mkt-clock-k">Deadline</span>
         <b>{hh}:{mm}:{ss}</b>
       </span>
     </div>
@@ -62,7 +62,7 @@ function DeadlineBar({ heading }) {
 function NewsTicker() {
   return (
     <div className="mkt-ticker">
-      <span className="mkt-ticker-tag"><i></i>Ultim'ora</span>
+      <span className="mkt-ticker-tag"><i></i>Breaking</span>
       <div className="mkt-ticker-view">
         <div className="mkt-ticker-run">
           {TICKER_NEWS.map((t, i) => <span key={i}>{t}</span>)}
@@ -164,7 +164,7 @@ function SpinWheel({ items, onResult, resetKey }) {
       <button onClick={spin} disabled={spinning || locked || items.length === 0}
         className="btn primary btn-sm"
         style={{ opacity: (spinning || locked || items.length === 0) ? 0.45 : 1, width: 'auto', minWidth: 140 }}>
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
+        {spinning ? 'SPINNING...' : locked ? 'SPUN ✓' : 'SPIN!'}
       </button>
     </div>
   )
@@ -245,9 +245,9 @@ export default function Transfer() {
 
   const getWheelItems = () => {
     if (step === 'yesno') return [
-      { label: 'SI!', value: true, color: '#16C784' },
+      { label: 'YES!', value: true, color: '#16C784' },
       { label: 'NO', value: false, color: '#FB5566' },
-      { label: 'SI!', value: true, color: '#0FA56C' },
+      { label: 'YES!', value: true, color: '#0FA56C' },
       { label: 'NO', value: false, color: '#FB5566' },
     ]
     if (step === 'budget') return BUDGET_OPTIONS.map(b => ({ ...b, label: b.label }))
@@ -262,10 +262,10 @@ export default function Transfer() {
     if (step === 'signing') {
       if (signingStep === 'league') return LEAGUES.map(l => ({ ...l, label: l.name }))
       if (signingStep === 'role') return [
-        { label: 'P', value: 'GK', color: '#F5B43C' },
-        { label: 'D', value: 'DEF', color: '#2E6BFF' },
-        { label: 'C', value: 'MID', color: '#16C784' },
-        { label: 'A', value: 'ATT', color: '#FB5566' },
+        { label: 'GK', value: 'GK', color: '#F5B43C' },
+        { label: 'DEF', value: 'DEF', color: '#2E6BFF' },
+        { label: 'MID', value: 'MID', color: '#16C784' },
+        { label: 'ATT', value: 'ATT', color: '#FB5566' },
       ]
       if (signingStep === 'player') return wheelItems
       if (signingStep === 'replace') return wheelItems
@@ -344,41 +344,41 @@ export default function Transfer() {
 
   const getStepPrompt = () => {
     const a = `Trattativa ${currentSigning + 1} di ${signingCount}`
-    if (step === 'yesno') return ['Si apre il mercato', 'Apri la sessione di gennaio?']
-    if (step === 'budget') return ['Tesoretto', 'Budget a disposizione']
-    if (step === 'count') return ['Piano mercato', 'Quanti colpi vuoi piazzare?']
+    if (step === 'yesno') return ['Transfer window opens', 'Open the January window?']
+    if (step === 'budget') return ['Transfer budget', 'Available budget']
+    if (step === 'count') return ['Transfer plan', 'How many signings?']
     if (step === 'signing') {
-      if (signingStep === 'league') return [a, 'Da quale campionato peschi?']
-      if (signingStep === 'role') return [a, 'Quale reparto rinforzi?']
-      if (signingStep === 'player') return [a, 'Il nome che fa sognare']
-      if (signingStep === 'replace') return [a, 'Chi parte per fargli posto?']
+      if (signingStep === 'league') return [a, 'From which league?']
+      if (signingStep === 'role') return [a, 'Which position?']
+      if (signingStep === 'player') return [a, 'The signing you dream of']
+      if (signingStep === 'replace') return [a, 'Who makes way?']
     }
-    return ['Deadline Day', 'Mercato di gennaio']
+    return ['Deadline Day', 'January window']
   }
 
   const getResultLabel = () => {
     if (!result) return null
-    if (step === 'yesno') return result.value ? 'SI, facciamo mercato!' : 'No, si va avanti così'
-    if (step === 'budget') return `${result.label} a disposizione`
-    if (step === 'count') return `${result.value} acquist${result.value === 1 ? 'o' : 'i'}`
+    if (step === 'yesno') return result.value ? 'YES, let\'s sign!' : 'No, we stay as we are'
+    if (step === 'budget') return `${result.label} available`
+    if (step === 'count') return `${result.value} signing${result.value === 1 ? '' : 's'}`
     if (step === 'signing') {
       if (signingStep === 'league') return result.name
       if (signingStep === 'role') return ROLE_LABELS[result.value] || result.label
       if (signingStep === 'player') return `${result.name} · OVR ${result.rating}`
-      if (signingStep === 'replace') return `Fuori ${result.name}`
+      if (signingStep === 'replace') return `Out: ${result.name}`
     }
     return null
   }
 
   const getResultSub = () => {
-    if (!result) return 'in agenda'
+    if (!result) return 'pending'
     if (step === 'signing' && signingStep === 'player') return `OVR ${result.rating}`
-    if (step === 'signing' && signingStep === 'replace') return 'fuori dalla rosa'
-    return 'selezionato'
+    if (step === 'signing' && signingStep === 'replace') return 'leaving squad'
+    return 'selected'
   }
 
   if (!guardPassed || loading) {
-    return <div className="mister-loading"><div>Caricamento...</div></div>
+    return <div className="mister-loading"><div>Loading...</div></div>
   }
 
   const showNext = result && !pendingSigningStep && !pendingTransfer
@@ -391,9 +391,9 @@ export default function Transfer() {
         <div className="page-scroll mkt-scroll" style={{ flex: 1 }}>
           <div className="mkt-close">
             <span className="mkt-close-gong">● Gong</span>
-            <h2 className="mkt-close-title">Mercato chiuso</h2>
+            <h2 className="mkt-close-title">Window closed</h2>
             <p className="mkt-close-sub">
-              {completedSignings.length} operazion{completedSignings.length === 1 ? 'e' : 'i'}
+              {completedSignings.length} deal{completedSignings.length === 1 ? '' : 's'}
               {budget ? ` · budget ${budget.label}` : ''}
             </p>
           </div>
@@ -407,14 +407,14 @@ export default function Transfer() {
             ))}
             {completedSignings.length === 0 && (
               <p style={{ color: 'var(--muted)', padding: '12px 4px', fontSize: 13, fontFamily: 'var(--font-num)' }}>
-                Sessione chiusa senza operazioni.
+                Window closed with no deals.
               </p>
             )}
           </div>
         </div>
         <div className="screen-foot mkt-foot">
           <button className="btn primary" onClick={() => navigate(`/squad/${sessionId}${isAutoMode ? '?mode=auto' : ''}`)}>
-            Torna alla squadra ▸
+            Back to squad ▸
           </button>
         </div>
         <NewsTicker />
@@ -432,42 +432,42 @@ export default function Transfer() {
           <div className="brk">
             <div className="brk-flash"><span className="brk-bolt">⚡</span>Breaking news</div>
             <div className="brk-body">
-              <span className="brk-stamp">Ufficiale</span>
+              <span className="brk-stamp">Official</span>
               <div className="brk-deal">
                 <b className="brk-in">{pendingTransfer.in.name}</b>
-                <span className="brk-to">è un nuovo giocatore di</span>
+                <span className="brk-to">joins</span>
                 <b className="brk-club">{session?.nickname || '—'}</b>
               </div>
               <div className="brk-meta">
                 <span>{ROLE_LABELS[signingRole?.value] || signingRole?.label}</span>
                 <i></i>
-                <span>da {signingLeague?.name}</span>
+                <span>from {signingLeague?.name}</span>
                 <i></i>
                 <span>OVR {pendingTransfer.in.rating}</span>
               </div>
             </div>
             <div className="brk-swap">
               <div className="brk-col out">
-                <span>Saluta</span>
+                <span>Out</span>
                 <b>{pendingTransfer.out.name}</b>
                 <small>OVR {pendingTransfer.out.rating}</small>
               </div>
               <div className="brk-vs">⇄</div>
               <div className="brk-col in">
-                <span>Arriva</span>
+                <span>In</span>
                 <b>{pendingTransfer.in.name}</b>
                 <small>OVR {pendingTransfer.in.rating}</small>
               </div>
             </div>
             <div className={`brk-delta ${delta >= 0 ? 'pos' : 'neg'}`}>
-              <span>Impatto sulla rosa</span>
+              <span>Squad impact</span>
               <b>{delta >= 0 ? '+' : ''}{delta} OVR</b>
             </div>
           </div>
 
           {completedSignings.length > 0 && (
             <div className="mkt-deals">
-              <div className="section-title" style={{ paddingLeft: 0 }}>Già effettuati</div>
+              <div className="section-title" style={{ paddingLeft: 0 }}>Completed</div>
               {completedSignings.map((s, i) => (
                 <div key={i} className="mkt-deal-row">
                   <span className="mkt-deal-role">{s.in.position}</span>
@@ -481,10 +481,10 @@ export default function Transfer() {
         <div className="screen-foot mkt-foot">
           <div className="btn-row">
             <button className="btn dark" style={{ flex: '0 0 40%' }} disabled={saving} onClick={skipToNextSigning}>
-              Salta il colpo
+              Skip this deal
             </button>
             <button className="btn primary" style={{ flex: 1 }} disabled={saving} onClick={executeTransfer}>
-              {saving ? '...' : 'Firma il contratto ▸'}
+              {saving ? '...' : 'Sign the contract ▸'}
             </button>
           </div>
         </div>
@@ -504,7 +504,7 @@ export default function Transfer() {
           <h2 className="mkt-l3-title">{title}</h2>
         </div>
         <div className="mkt-stage">
-          <span className="mkt-onair"><i></i>On air · estrazione</span>
+          <span className="mkt-onair"><i></i>Live · draw</span>
           <div className="mkt-wheelframe">
             <span className="bk tl" /><span className="bk tr" />
             <span className="bk bl" /><span className="bk br" />
@@ -526,13 +526,13 @@ export default function Transfer() {
 
         {pendingSigningStep && (
           <div style={{ textAlign: 'center', color: 'var(--mkt-amber)', padding: '12px 0', fontFamily: 'var(--font-num)', fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase' }}>
-            Caricamento rosa...
+            Loading squad...
           </div>
         )}
 
         {completedSignings.length > 0 && (
           <div className="mkt-deals" style={{ marginTop: 8 }}>
-            <div className="section-title" style={{ paddingLeft: 22 }}>Già effettuati</div>
+            <div className="section-title" style={{ paddingLeft: 22 }}>Completed</div>
             {completedSignings.map((s, i) => (
               <div key={i} className="mkt-deal-row">
                 <span className="mkt-deal-role">{s.in.position}</span>
@@ -550,7 +550,7 @@ export default function Transfer() {
           className="btn primary"
           style={{ opacity: showNext && !saving ? 1 : 0.4, pointerEvents: showNext && !saving ? 'auto' : 'none' }}
         >
-          {step === 'yesno' && result && !doTransfer ? 'Chiudi senza colpi ▸' : 'Manda in onda ▸'}
+          {step === 'yesno' && result && !doTransfer ? 'Close without signings ▸' : 'Confirm ▸'}
         </button>
       </div>
       <NewsTicker />

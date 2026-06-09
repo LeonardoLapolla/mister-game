@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
 const BUDGET_OPTIONS = [
-  { value: 100, label: '100M', description: 'Facile — punteggio base', color: 'green' },
-  { value: 50, label: '50M', description: 'Equilibrato', color: 'yellow' },
-  { value: 30, label: '30M', description: 'Difficile — massimo punteggio', color: 'red' },
+  { value: 100, label: '100M', description: 'Easy — base score', color: 'green' },
+  { value: 50, label: '50M', description: 'Balanced', color: 'yellow' },
+  { value: 30, label: '30M', description: 'Hard — max score', color: 'red' },
 ]
 
 const FORMATION_OPTIONS = [
-  { id: '4-3-3', description: 'Offensivo' },
-  { id: '4-4-2', description: 'Equilibrato' },
-  { id: '3-5-2', description: 'Centrocampo folto' },
-  { id: '5-3-2', description: 'Difensivo' },
-  { id: '4-2-3-1', description: 'Contropiede' },
+  { id: '4-3-3', description: 'Offensive' },
+  { id: '4-4-2', description: 'Balanced' },
+  { id: '3-5-2', description: 'Midfield-heavy' },
+  { id: '5-3-2', description: 'Defensive' },
+  { id: '4-2-3-1', description: 'Counter-attack' },
 ]
 
 export default function Setup() {
@@ -68,28 +68,28 @@ export default function Setup() {
   return (
     <div className="min-h-screen bg-gray-950 px-4 py-12">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-black text-white mb-2">Crea il tuo club</h1>
-        <p className="text-gray-500 mb-10">Scegli con cura — non si torna indietro.</p>
+        <h1 className="text-4xl font-black text-white mb-2">Create your club</h1>
+        <p className="text-gray-500 mb-10">Choose wisely — no going back.</p>
 
         {/* Nickname */}
         <div className="mb-8">
           <label className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-3 block">
-            Nome allenatore
+            Manager name
           </label>
           <input
             type="text"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
-            placeholder="Es. Mister Rossi"
+            placeholder="E.g. Manager Smith"
             maxLength={20}
             className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-green-500 transition-colors"
           />
         </div>
 
-        {/* Campionato */}
+        {/* League */}
         <div className="mb-8">
           <label className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-3 block">
-            Campionato
+            League
           </label>
           <div className="grid grid-cols-1 gap-3">
             {Object.entries(leagues).map(([code, league]) => (
@@ -107,7 +107,7 @@ export default function Setup() {
                   <span className="text-gray-500 text-sm">{league.country}</span>
                 </div>
                 <span className="text-xs text-gray-600">
-                  ×{league.multiplier} punti
+                  ×{league.multiplier} points
                 </span>
               </button>
             ))}
@@ -117,7 +117,7 @@ export default function Setup() {
         {/* Budget */}
         <div className="mb-8">
           <label className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-3 block">
-            Budget
+            Starting Budget
           </label>
           <div className="grid grid-cols-3 gap-3">
             {BUDGET_OPTIONS.map((b) => (
@@ -137,10 +137,10 @@ export default function Setup() {
           </div>
         </div>
 
-        {/* Modulo */}
+        {/* Formation */}
         <div className="mb-10">
           <label className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-3 block">
-            Modulo
+            Formation
           </label>
           <div className="grid grid-cols-5 gap-2">
             {FORMATION_OPTIONS.map((f) => (
@@ -171,7 +171,7 @@ export default function Setup() {
           disabled={!canProceed || loading}
           className="w-full bg-green-500 hover:bg-green-400 disabled:bg-gray-800 disabled:text-gray-600 text-black font-black text-xl py-4 rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:scale-100"
         >
-          {loading ? 'Creazione...' : 'VAI AL MERCATO →'}
+          {loading ? 'Creating...' : 'GO TO MARKET →'}
         </button>
       </div>
     </div>

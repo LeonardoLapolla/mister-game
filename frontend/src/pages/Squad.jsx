@@ -103,7 +103,7 @@ export default function Squad() {
   if (!guardPassed || loading) {
     return (
       <div className="mister-loading">
-        <div>Caricamento...</div>
+        <div>Loading...</div>
       </div>
     )
   }
@@ -140,7 +140,7 @@ export default function Squad() {
 
       {isAutoMode && (
         <div style={{ margin: '0 22px', background: 'color-mix(in oklab,var(--draw) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--draw) 40%,transparent)', borderRadius: 'var(--r-sm)', padding: '10px 14px', fontFamily: 'var(--font-num)', fontSize: 12, color: 'var(--draw)' }}>
-          Modalità simulazione — il ritorno verrà simulato automaticamente
+          Simulation mode — the second leg will be simulated automatically
         </div>
       )}
 
@@ -181,7 +181,7 @@ export default function Squad() {
           className="btn primary"
           style={{ opacity: simulating ? 0.5 : 1 }}
         >
-          {simulating ? 'Simulazione ritorno...' : isAutoMode ? 'SIMULA IL RITORNO ▶' : 'INIZIA LA STAGIONE ▶'}
+          {simulating ? 'Simulating second leg...' : isAutoMode ? 'SIMULATE SECOND LEG ▶' : 'START SEASON ▶'}
         </button>
       </div>
     </div>

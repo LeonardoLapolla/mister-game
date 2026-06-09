@@ -47,17 +47,17 @@ function pitchPositions(layout, playersByPosition) {
   })
   return positions
 }
-const ROLE_LABELS = { GK: 'Portiere', DEF: 'Difensore', MID: 'Centrocampista', ATT: 'Attaccante' }
+const ROLE_LABELS = { GK: 'Goalkeeper', DEF: 'Defender', MID: 'Midfielder', ATT: 'Forward' }
 
 const TICKER_NEWS = [
-  'Secondo indiscrezioni, trattativa avanzata tra un top club e un bomber della Serie A',
-  'Il Real Madrid monitora un giovane talento del Napoli: offerta in arrivo?',
-  'Accordo vicino tra Milan e un attaccante della Bundesliga · agente a Milano',
-  "L'Inter valuta lo svincolato per rinforzare la difesa in estate",
-  'La Roma tratta con il PSG per uno scambio di centrocampisti',
-  'Colpo in entrata per il Napoli: sirene dalla Premier League per il 10',
-  'Juventus: contatti con il Chelsea per un esterno di livello internazionale',
-  'Trattativa in stallo tra Lazio e un club francese · si attende risposta',
+  'Sources claim advanced talks between a top club and a Serie A striker',
+  'Real Madrid monitoring a young Napoli talent: bid incoming?',
+  'Deal close between Milan and a Bundesliga forward · agent in Milan',
+  'Inter weighing a free agent to bolster defence this summer',
+  'Roma in talks with PSG over a midfielder swap',
+  'Napoli incoming: Premier League interest in their number 10',
+  'Juventus: contact with Chelsea over a wide player of international calibre',
+  'Talks stalled between Lazio and a French club · awaiting response',
 ]
 
 function DeadlineBar({ heading }) {
@@ -75,7 +75,7 @@ function DeadlineBar({ heading }) {
       <span className="mkt-live"><i></i>LIVE</span>
       <span className="mkt-bar-title">{heading}</span>
       <span className="mkt-clock">
-        <span className="mkt-clock-k">Gong</span>
+        <span className="mkt-clock-k">Deadline</span>
         <b>{hh}:{mm}:{ss}</b>
       </span>
     </div>
@@ -85,7 +85,7 @@ function DeadlineBar({ heading }) {
 function NewsTicker() {
   return (
     <div className="mkt-ticker">
-      <span className="mkt-ticker-tag"><i></i>Ultim'ora</span>
+      <span className="mkt-ticker-tag"><i></i>Breaking</span>
       <div className="mkt-ticker-view">
         <div className="mkt-ticker-run">
           {TICKER_NEWS.map((t, i) => <span key={i}>{t}</span>)}
@@ -182,7 +182,7 @@ function SpinWheel({ items, onResult, resetKey }) {
       <button onClick={spin} disabled={spinning || locked || items.length === 0}
         className="btn primary btn-sm"
         style={{ opacity: (spinning || locked || items.length === 0) ? 0.45 : 1, width: 'auto', minWidth: 140 }}>
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
+        {spinning ? 'SPINNING...' : locked ? 'SPUN ✓' : 'SPIN!'}
       </button>
     </div>
   )
@@ -331,8 +331,8 @@ export default function EndSeason() {
   const getSigningWheelItems = () => {
     if (signingStep === 'league') return LEAGUES.map(l => ({ ...l, label: l.name }))
     if (signingStep === 'role') return [
-      { label: 'P', value: 'GK', color: '#F5B43C' }, { label: 'D', value: 'DEF', color: '#2E6BFF' },
-      { label: 'C', value: 'MID', color: '#16C784' }, { label: 'A', value: 'ATT', color: '#FB5566' },
+      { label: 'GK', value: 'GK', color: '#F5B43C' }, { label: 'DEF', value: 'DEF', color: '#2E6BFF' },
+      { label: 'MID', value: 'MID', color: '#16C784' }, { label: 'ATT', value: 'ATT', color: '#FB5566' },
     ]
     if (signingStep === 'player' || signingStep === 'replace') return wheelItems
     return []
@@ -389,29 +389,29 @@ export default function EndSeason() {
   }
 
   const getStepTitle = () => {
-    if (phase === 'budget') return 'Budget mercato estivo'
-    if (phase === 'count') return 'Quanti acquisti?'
+    if (phase === 'budget') return 'Summer budget'
+    if (phase === 'count') return 'How many signings?'
     if (phase === 'signing') {
-      return { league: `Acquisto ${currentSigning + 1}/${signingCount} — Campionato`, role: `Acquisto ${currentSigning + 1}/${signingCount} — Ruolo`, player: `Acquisto ${currentSigning + 1}/${signingCount} — Giocatore`, replace: `Acquisto ${currentSigning + 1}/${signingCount} — Chi sostituisce?` }[signingStep]
+      return { league: `Signing ${currentSigning + 1}/${signingCount} — League`, role: `Signing ${currentSigning + 1}/${signingCount} — Role`, player: `Signing ${currentSigning + 1}/${signingCount} — Player`, replace: `Signing ${currentSigning + 1}/${signingCount} — Who makes way?` }[signingStep]
     }
     return ''
   }
 
   const getResultLabel = () => {
     if (!result) return null
-    if (phase === 'budget') return `${result.label} a disposizione`
-    if (phase === 'count') return `${result.value} acquisti`
+    if (phase === 'budget') return `${result.label} available`
+    if (phase === 'count') return `${result.value} signing${result.value === 1 ? '' : 's'}`
     if (phase === 'signing') {
       if (signingStep === 'league') return result.name
       if (signingStep === 'role') return ROLE_LABELS[result.value] || result.label
       if (signingStep === 'player') return `${result.name} · OVR ${result.rating}`
-      if (signingStep === 'replace') return `Fuori ${result.name}`
+      if (signingStep === 'replace') return `Out: ${result.name}`
     }
     return null
   }
 
   if (!guardPassed || loading || (fromEuropa && phase === 'recap')) {
-    return <div className="mister-loading"><div>Caricamento...</div></div>
+    return <div className="mister-loading"><div>Loading...</div></div>
   }
 
   const seasonNumber = data?.seasonNumber || 1
@@ -425,38 +425,38 @@ export default function EndSeason() {
         <div className="page-scroll" style={{ flex: 1 }}>
           <div className="final-hero">
             <div className="final-cup">{phase === 'relegated' ? '💀' : '🏆'}</div>
-            <span className="final-k">{phase === 'relegated' ? 'Game Over' : `${MAX_SEASONS} Stagioni completate`}</span>
+            <span className="final-k">{phase === 'relegated' ? 'Game Over' : `${MAX_SEASONS} Seasons completed`}</span>
             <span className="final-total">{totalScore}</span>
-            <span className="final-team">{session?.nickname} · punteggio totale</span>
+            <span className="final-team">{session?.nickname} · total score</span>
           </div>
 
           <div className="final-stats">
-            <div className="fs"><b>{history.length}</b><span>Stagioni</span></div>
+            <div className="fs"><b>{history.length}</b><span>Seasons</span></div>
             <div className="fs">
-              <b>{history.reduce((s, h) => s + (h.wins || 0), 0)}</b><span>Vittorie</span>
+              <b>{history.reduce((s, h) => s + (h.wins || 0), 0)}</b><span>Wins</span>
             </div>
             <div className="fs">
               <b style={{ color: phase === 'relegated' ? 'var(--loss)' : 'var(--primary)' }}>
                 {phase === 'relegated' ? '💀' : history.length >= MAX_SEASONS ? '🏁' : `${history.length}/${MAX_SEASONS}`}
               </b>
-              <span>{phase === 'relegated' ? 'Retrocesso' : 'Finale'}</span>
+              <span>{phase === 'relegated' ? 'Relegated' : 'Final'}</span>
             </div>
           </div>
 
-          <div className="section-title">Riepilogo stagioni</div>
+          <div className="section-title">Season summary</div>
           <div style={{ padding: '0 22px' }}>
             {history.map((h) => (
               <div key={h.seasonNumber} className="hist-row">
-                <span className="hist-s">Stagione {h.seasonNumber}</span>
+                <span className="hist-s">Season {h.seasonNumber}</span>
                 <span className="hist-comp" style={{ background: h.position <= 4 ? 'var(--champions)' : h.position <= 6 ? 'var(--europa)' : 'var(--muted)' }} />
                 <span className="hist-pos">{h.position}°</span>
-                <span className="hist-pt">{h.wins}V {h.draws}P {h.losses}S</span>
+                <span className="hist-pt">{h.wins}W {h.draws}D {h.losses}L</span>
                 <span className="hist-score">{h.finalScore || 0} pt</span>
               </div>
             ))}
           </div>
 
-          <div className="section-title">Formazione finale</div>
+          <div className="section-title">Final squad</div>
           {(() => {
             const formation = session?.formation || '4-3-3'
             const layout = FORMATION_LAYOUT[formation] || FORMATION_LAYOUT['4-3-3']
@@ -486,7 +486,7 @@ export default function EndSeason() {
           <div style={{ height: 100 }} />
         </div>
         <div className="screen-foot">
-          <button onClick={() => navigate('/')} className="btn primary">GIOCA ANCORA ▶</button>
+          <button onClick={() => navigate('/')} className="btn primary">PLAY AGAIN ▶</button>
         </div>
       </div>
     )
@@ -500,20 +500,20 @@ export default function EndSeason() {
         <div className="inter-bg" />
         <div className="page-scroll" style={{ flex: 1 }}>
           <div className="inter-hero">
-            <span className="inter-kick">Fine stagione {seasonNumber}</span>
-            <div className="inter-title">{seasonNumber < MAX_SEASONS ? 'Stagione' : 'Ultima'}</div>
-            <div className="inter-team">{seasonNumber} di {MAX_SEASONS}</div>
+            <span className="inter-kick">End of season {seasonNumber}</span>
+            <div className="inter-title">{seasonNumber < MAX_SEASONS ? 'Season' : 'Last'}</div>
+            <div className="inter-team">{seasonNumber} of {MAX_SEASONS}</div>
           </div>
 
           {history.length > 0 && (
             <div style={{ padding: '0 22px', marginTop: 16 }}>
-              <div className="section-title" style={{ paddingLeft: 0 }}>Stagioni precedenti</div>
+              <div className="section-title" style={{ paddingLeft: 0 }}>Previous seasons</div>
               {history.map((h) => (
                 <div key={h.seasonNumber} className="hist-row">
-                  <span className="hist-s">Stagione {h.seasonNumber}</span>
+                  <span className="hist-s">Season {h.seasonNumber}</span>
                   <span className="hist-comp" style={{ background: h.position <= 4 ? 'var(--champions)' : h.position <= 6 ? 'var(--europa)' : 'var(--muted)' }} />
                   <span className="hist-pos">{h.position}°</span>
-                  <span className="hist-pt">{h.wins}V {h.draws}P</span>
+                  <span className="hist-pt">{h.wins}W {h.draws}D</span>
                   <span className="hist-score">{h.finalScore || 0} pt</span>
                 </div>
               ))}
@@ -523,15 +523,15 @@ export default function EndSeason() {
           {isRelegated && (
             <div style={{ margin: '16px 22px 0', background: 'color-mix(in oklab,var(--loss) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--loss) 40%,transparent)', borderRadius: 'var(--r-lg)', padding: '18px 20px', textAlign: 'center' }}>
               <div style={{ fontSize: 32, marginBottom: 6 }}>💀</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, textTransform: 'uppercase', color: 'var(--loss)' }}>Retrocesso!</div>
-              <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>La tua avventura finisce qui.</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, textTransform: 'uppercase', color: 'var(--loss)' }}>Relegated!</div>
+              <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>Your journey ends here.</div>
             </div>
           )}
 
           {!isRelegated && seasonNumber < MAX_SEASONS && (
             <div className="inter-obj">
-              <span className="inter-card-k">Obiettivo prossima stagione</span>
-              <b>Stagione {seasonNumber + 1} di {MAX_SEASONS}</b>
+              <span className="inter-card-k">Next season objective</span>
+              <b>Season {seasonNumber + 1} of {MAX_SEASONS}</b>
             </div>
           )}
 
@@ -539,7 +539,7 @@ export default function EndSeason() {
         </div>
         <div className="screen-foot">
           {europaCheckLoading && !isRelegated && seasonNumber < MAX_SEASONS ? (
-            <button className="btn ghost" disabled>Verifica qualificazioni...</button>
+            <button className="btn ghost" disabled>Checking qualifications...</button>
           ) : europaCompetition && !isRelegated && seasonNumber <= MAX_SEASONS ? (
             <button
               className="euro-ticket"
@@ -553,7 +553,7 @@ export default function EndSeason() {
                 <b>
                   {europaCompetition === 'champions' ? 'Champions League' : europaCompetition === 'europa' ? "Europa League" : 'Conference League'}
                 </b>
-                <span className="euro-sub">Qualificato — tocca per giocare</span>
+                <span className="euro-sub">Qualified — tap to play</span>
               </div>
               <span className="euro-go">▶</span>
             </button>
@@ -567,7 +567,7 @@ export default function EndSeason() {
               }}
               className="btn primary"
             >
-              {isRelegated || seasonNumber >= MAX_SEASONS ? 'VEDI RIEPILOGO ▶' : 'INIZIA MERCATO ESTIVO ▶'}
+              {isRelegated || seasonNumber >= MAX_SEASONS ? 'SEE SUMMARY ▶' : 'START SUMMER MARKET ▶'}
             </button>
           )}
         </div>
@@ -576,23 +576,23 @@ export default function EndSeason() {
   }
 
   const getStepPrompt = () => {
-    const a = `Trattativa ${currentSigning + 1} di ${signingCount}`
-    if (phase === 'budget') return ['Calciomercato Estate', 'Budget a disposizione']
-    if (phase === 'count') return ['Piano mercato', 'Quanti colpi vuoi piazzare?']
+    const a = `Signing ${currentSigning + 1} of ${signingCount}`
+    if (phase === 'budget') return ['Summer Transfer Window', 'Available budget']
+    if (phase === 'count') return ['Transfer plan', 'How many signings?']
     if (phase === 'signing') {
-      if (signingStep === 'league') return [a, 'Da quale campionato peschi?']
-      if (signingStep === 'role') return [a, 'Quale reparto rinforzi?']
-      if (signingStep === 'player') return [a, 'Il nome che fa sognare']
-      if (signingStep === 'replace') return [a, 'Chi parte per fargli posto?']
+      if (signingStep === 'league') return [a, 'From which league?']
+      if (signingStep === 'role') return [a, 'Which position?']
+      if (signingStep === 'player') return [a, 'The signing you dream of']
+      if (signingStep === 'replace') return [a, 'Who makes way?']
     }
-    return ['Deadline Day', 'Mercato estivo']
+    return ['Deadline Day', 'Summer window']
   }
 
   const getResultSub = () => {
-    if (!result) return 'in agenda'
+    if (!result) return 'pending'
     if (phase === 'signing' && signingStep === 'player') return `OVR ${result.rating}`
-    if (phase === 'signing' && signingStep === 'replace') return 'fuori dalla rosa'
-    return 'selezionato'
+    if (phase === 'signing' && signingStep === 'replace') return 'leaving squad'
+    return 'selected'
   }
 
   /* ---- MERCATO ESTIVO SUMMARY ---- */
@@ -603,9 +603,9 @@ export default function EndSeason() {
         <div className="page-scroll mkt-scroll" style={{ flex: 1 }}>
           <div className="mkt-close">
             <span className="mkt-close-gong">● Gong</span>
-            <h2 className="mkt-close-title">Mercato chiuso</h2>
+            <h2 className="mkt-close-title">Window closed</h2>
             <p className="mkt-close-sub">
-              {completedSignings.length} operazion{completedSignings.length === 1 ? 'e' : 'i'}
+              {completedSignings.length} deal{completedSignings.length === 1 ? '' : 's'}
               {budget ? ` · budget ${budget.label}` : ''}
             </p>
           </div>
@@ -619,14 +619,14 @@ export default function EndSeason() {
             ))}
             {completedSignings.length === 0 && (
               <p style={{ color: 'var(--muted)', padding: '12px 4px', fontSize: 13, fontFamily: 'var(--font-num)' }}>
-                Sessione chiusa senza operazioni.
+                Window closed with no deals.
               </p>
             )}
           </div>
         </div>
         <div className="screen-foot mkt-foot">
           <button className="btn primary" onClick={() => navigate(`/squad/${sessionId}`)}>
-            Torna alla squadra ▸
+            Back to squad ▸
           </button>
         </div>
         <NewsTicker />
@@ -646,41 +646,41 @@ export default function EndSeason() {
           <div className="brk">
             <div className="brk-flash"><span className="brk-bolt">⚡</span>Breaking news</div>
             <div className="brk-body">
-              <span className="brk-stamp">Ufficiale</span>
+              <span className="brk-stamp">Official</span>
               <div className="brk-deal">
                 <b className="brk-in">{pendingTransfer.in.name}</b>
-                <span className="brk-to">è un nuovo giocatore di</span>
+                <span className="brk-to">joins</span>
                 <b className="brk-club">{session?.nickname || '—'}</b>
               </div>
               <div className="brk-meta">
                 <span>{ROLE_LABELS[signingRole?.value] || signingRole?.label}</span>
                 <i></i>
-                <span>da {signingLeague?.name}</span>
+                <span>from {signingLeague?.name}</span>
                 <i></i>
                 <span>OVR {pendingTransfer.in.rating}</span>
               </div>
             </div>
             <div className="brk-swap">
               <div className="brk-col out">
-                <span>Saluta</span>
+                <span>Out</span>
                 <b>{pendingTransfer.out.name}</b>
                 <small>OVR {pendingTransfer.out.rating}</small>
               </div>
               <div className="brk-vs">⇄</div>
               <div className="brk-col in">
-                <span>Arriva</span>
+                <span>In</span>
                 <b>{pendingTransfer.in.name}</b>
                 <small>OVR {pendingTransfer.in.rating}</small>
               </div>
             </div>
             <div className={`brk-delta ${delta >= 0 ? 'pos' : 'neg'}`}>
-              <span>Impatto sulla rosa</span>
+              <span>Squad impact</span>
               <b>{delta >= 0 ? '+' : ''}{delta} OVR</b>
             </div>
           </div>
           {completedSignings.length > 0 && (
             <div className="mkt-deals">
-              <div className="section-title" style={{ paddingLeft: 0 }}>Già effettuati</div>
+              <div className="section-title" style={{ paddingLeft: 0 }}>Completed</div>
               {completedSignings.map((s, i) => (
                 <div key={i} className="mkt-deal-row">
                   <span className="mkt-deal-role">{s.in.position}</span>
@@ -693,9 +693,9 @@ export default function EndSeason() {
         </div>
         <div className="screen-foot mkt-foot">
           <div className="btn-row">
-            <button className="btn dark" style={{ flex: '0 0 40%' }} disabled={saving} onClick={skipToNextSigning}>Salta il colpo</button>
+            <button className="btn dark" style={{ flex: '0 0 40%' }} disabled={saving} onClick={skipToNextSigning}>Skip this deal</button>
             <button className="btn primary" style={{ flex: 1 }} disabled={saving} onClick={executeTransfer}>
-              {saving ? '...' : 'Firma il contratto ▸'}
+              {saving ? '...' : 'Sign the contract ▸'}
             </button>
           </div>
         </div>
@@ -715,7 +715,7 @@ export default function EndSeason() {
           <h2 className="mkt-l3-title">{title}</h2>
         </div>
         <div className="mkt-stage">
-          <span className="mkt-onair"><i></i>On air · estrazione</span>
+          <span className="mkt-onair"><i></i>Live · draw</span>
           <div className="mkt-wheelframe">
             <span className="bk tl" /><span className="bk tr" />
             <span className="bk bl" /><span className="bk br" />
@@ -741,13 +741,13 @@ export default function EndSeason() {
 
         {pendingStep && (
           <div style={{ textAlign: 'center', color: 'var(--mkt-amber)', padding: '12px 0', fontFamily: 'var(--font-num)', fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase' }}>
-            Caricamento rosa...
+            Loading squad...
           </div>
         )}
 
         {completedSignings.length > 0 && (
           <div className="mkt-deals" style={{ marginTop: 8 }}>
-            <div className="section-title" style={{ paddingLeft: 22 }}>Già effettuati</div>
+            <div className="section-title" style={{ paddingLeft: 22 }}>Completed</div>
             {completedSignings.map((s, i) => (
               <div key={i} className="mkt-deal-row">
                 <span className="mkt-deal-role">{s.in.position}</span>
@@ -765,7 +765,7 @@ export default function EndSeason() {
           className="btn primary"
           style={{ opacity: showNext && !saving ? 1 : 0.4, pointerEvents: showNext && !saving ? 'auto' : 'none' }}
         >
-          Manda in onda ▸
+          Confirm ▸
         </button>
       </div>
       <NewsTicker />

@@ -5,12 +5,12 @@ import useBlockBack from '../hooks/useBlockBack'
 import usePageGuard from '../hooks/usePageGuard'
 
 const EVENTS = [
-  { id: 'hot_striker', emoji: '🔥', text: 'Il tuo bomber è in forma smagliante!', type: 'bonus', win: +7, draw: 0, loss: 0 },
-  { id: 'keeper_injured', emoji: '🤕', text: 'Grave infortunio, gioca la riserva', type: 'malus', win: 0, draw: 0, loss: +7 },
-  { id: 'great_training', emoji: '💪', text: 'Settimana di allenamento perfetta, squadra al massimo!', type: 'bonus', win: +5, draw: 0, loss: -3 },
-  { id: 'heavy_pitch', emoji: '😤', text: 'Difficoltà a segnare', type: 'malus', win: -5, draw: +6, loss: 0 },
-  { id: 'opponent_crisis', emoji: '🤩', text: "Grande espressione del gioco, giocate a memoria!", type: 'bonus', win: +6, draw: -3, loss: 0 },
-  { id: 'dressing_room', emoji: '😰', text: 'Tensione nello spogliatoio, clima pesante', type: 'malus', win: -6, draw: 0, loss: +5 },
+  { id: 'hot_striker', emoji: '🔥', text: 'Your striker is on fire!', type: 'bonus', win: +7, draw: 0, loss: 0 },
+  { id: 'keeper_injured', emoji: '🤕', text: 'Serious injury, backup keeper plays', type: 'malus', win: 0, draw: 0, loss: +7 },
+  { id: 'great_training', emoji: '💪', text: 'Perfect training week, squad at full strength!', type: 'bonus', win: +5, draw: 0, loss: -3 },
+  { id: 'heavy_pitch', emoji: '😤', text: 'Struggling to score', type: 'malus', win: -5, draw: +6, loss: 0 },
+  { id: 'opponent_crisis', emoji: '🤩', text: "Great team performance, playing like a dream!", type: 'bonus', win: +6, draw: -3, loss: 0 },
+  { id: 'dressing_room', emoji: '😰', text: 'Tension in the dressing room, heavy atmosphere', type: 'malus', win: -6, draw: 0, loss: +5 },
 ]
 
 const SEG_COLORS_MATCH = { win: '#16C784', draw: '#F5B43C', loss: '#FB5566' }
@@ -145,7 +145,7 @@ function SpinWheelBase({ items, onResult, locked, onLock, size = 280 }) {
       <button onClick={spin} disabled={spinning || locked || items.length === 0}
         className="btn primary btn-sm"
         style={{ opacity: (spinning || locked || items.length === 0) ? 0.45 : 1, width: 'auto', minWidth: 140 }}>
-        {spinning ? 'GIRANDO...' : locked ? 'GIRATO ✓' : 'GIRA!'}
+        {spinning ? 'SPINNING...' : locked ? 'SPUN ✓' : 'SPIN!'}
       </button>
     </div>
   )
@@ -161,13 +161,13 @@ function StandingsDrawer({ open, onClose, standings, playedCount, teamName, leag
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 18px 12px' }}>
           <div>
             <p className="kicker">Live</p>
-            <h2 className="h-display" style={{ fontSize: 26 }}>Classifica</h2>
+            <h2 className="h-display" style={{ fontSize: 26 }}>Standings</h2>
           </div>
-          <button className="btn dark btn-sm" onClick={onClose}>Chiudi</button>
+          <button className="btn dark btn-sm" onClick={onClose}>Close</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <div className="std">
-            <div className="std-h"><span>#</span><span>Squadra</span><span>V</span><span>P</span><span>S</span><span>Pt</span></div>
+            <div className="std-h"><span>#</span><span>Team</span><span>W</span><span>D</span><span>L</span><span>Pts</span></div>
             {standings.map((team, i) => {
               const isYou = team.name === 'La Tua Squadra'
               const pos = i + 1
@@ -192,7 +192,7 @@ function StandingsDrawer({ open, onClose, standings, playedCount, teamName, leag
             <span><i style={{ background: 'var(--champions)' }} />Champions</span>
             <span><i style={{ background: 'var(--europa)' }} />Europa</span>
             <span><i style={{ background: 'var(--conference)' }} />Conference</span>
-            <span><i style={{ background: 'var(--loss)' }} />Retroc.</span>
+            <span><i style={{ background: 'var(--loss)' }} />Rel.</span>
           </div>
         </div>
       </div>
@@ -274,7 +274,7 @@ export default function Season() {
         }
       }
     } catch (err) {
-      setError('Errore nel caricamento')
+      setError('Error loading')
     } finally {
       setLoading(false)
     }
@@ -365,7 +365,7 @@ export default function Season() {
         const next = await fetchNextMatch()
         if (next?.finished) finishSeason()
       }, 2000)
-    } catch { setError('Errore nel salvataggio') } finally { setPlayingNext(false) }
+    } catch { setError('Error saving') } finally { setPlayingNext(false) }
   }
 
   const continueSecondLeg = async () => {
@@ -383,7 +383,7 @@ export default function Season() {
   }
 
   if (!guardPassed || loading) {
-    return <div className="mister-loading"><div>Caricamento...</div></div>
+    return <div className="mister-loading"><div>Loading...</div></div>
   }
 
   const matchList = matches || []
@@ -412,10 +412,10 @@ export default function Season() {
   const StatsBar = () => (
     <div className="stats-bar">
       <div className="sc hl"><div className="sn">{points}</div><div className="sk">Pt</div></div>
-      <div className="sc sv"><div className="sn">{wins}</div><div className="sk">V</div></div>
-      <div className="sc sp"><div className="sn">{draws}</div><div className="sk">P</div></div>
-      <div className="sc ss"><div className="sn">{losses}</div><div className="sk">S</div></div>
-      <div className="sc"><div className="sn" style={{ fontSize: 15 }}>{goalsFor}/{goalsAgainst}</div><div className="sk">Gol</div></div>
+      <div className="sc sv"><div className="sn">{wins}</div><div className="sk">W</div></div>
+      <div className="sc sp"><div className="sn">{draws}</div><div className="sk">D</div></div>
+      <div className="sc ss"><div className="sn">{losses}</div><div className="sk">L</div></div>
+      <div className="sc"><div className="sn" style={{ fontSize: 15 }}>{goalsFor}/{goalsAgainst}</div><div className="sk">Goals</div></div>
     </div>
   )
 
@@ -434,19 +434,19 @@ export default function Season() {
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 22px', gap: 16 }}>
           <div style={{ textAlign: 'center', marginBottom: 8 }}>
-            <p className="kicker">Stagione</p>
-            <h2 className="h-display" style={{ fontSize: 38 }}>Come vuoi giocare?</h2>
-            <p style={{ color: 'var(--muted)', marginTop: 8, fontSize: 14 }}>Scegli come affrontare la stagione</p>
+            <p className="kicker">Season</p>
+            <h2 className="h-display" style={{ fontSize: 38 }}>How do you want to play?</h2>
+            <p style={{ color: 'var(--muted)', marginTop: 8, fontSize: 14 }}>Choose how to play your season</p>
           </div>
           <button onClick={startManual} disabled={generating}
             className="opt" style={{ display: 'block', padding: '18px 20px' }}>
-            <b>Partita per partita</b>
-            <small>Gira la ruota per ogni partita. Calendario casuale con andata e ritorno.</small>
+            <b>Match by match</b>
+            <small>Spin the wheel for each match. Random schedule with home and away legs.</small>
           </button>
           <button onClick={generateFirstLeg} disabled={generating}
             className="opt" style={{ display: 'block', padding: '18px 20px' }}>
-            <b>Simula tutto</b>
-            <small>Simula con mercato a metà stagione.</small>
+            <b>Auto mode</b>
+            <small>Simulate with mid-season transfer window.</small>
           </button>
           {error && <div style={{ color: 'var(--loss)', fontSize: 13, textAlign: 'center' }}>{error}</div>}
         </div>
@@ -461,17 +461,17 @@ export default function Season() {
         <div className="gtop">
           <div className="gteam">
             <div className="gcrest">{(teamName || 'M')[0]}</div>
-            <div><b>{teamName}</b><small>Fine andata</small></div>
+            <div><b>{teamName}</b><small>First leg done</small></div>
           </div>
         </div>
         <div className="page-scroll">
           <StatsBar />
           <div style={{ padding: '18px 22px 4px', textAlign: 'center' }}>
-            <p className="kicker">Classifica dopo 20 giornate</p>
-            <h2 className="h-display" style={{ fontSize: 32 }}>Fine girone d'andata!</h2>
+            <p className="kicker">Standings after 20 matchdays</p>
+            <h2 className="h-display" style={{ fontSize: 32 }}>End of first leg!</h2>
           </div>
           <div className="std" style={{ marginTop: 12 }}>
-            <div className="std-h"><span>#</span><span>Squadra</span><span>V</span><span>P</span><span>S</span><span>Pt</span></div>
+            <div className="std-h"><span>#</span><span>Team</span><span>W</span><span>D</span><span>L</span><span>Pts</span></div>
             {halfTimeStandings.map((team, i) => {
               const isYou = team.name === 'La Tua Squadra'
               const tot = halfTimeStandings.length
@@ -497,12 +497,12 @@ export default function Season() {
             <span><i style={{ background: 'var(--champions)' }} />Champions</span>
             <span><i style={{ background: 'var(--europa)' }} />Europa</span>
             <span><i style={{ background: 'var(--conference)' }} />Conference</span>
-            <span><i style={{ background: 'var(--loss)' }} />Retroc.</span>
+            <span><i style={{ background: 'var(--loss)' }} />Rel.</span>
           </div>
           <div style={{ height: 100 }} />
         </div>
         <div className="screen-foot">
-          <button onClick={continueSecondLeg} className="btn primary">INIZIA IL RITORNO ▶</button>
+          <button onClick={continueSecondLeg} className="btn primary">START SECOND LEG ▶</button>
         </div>
       </div>
     )
@@ -518,9 +518,9 @@ export default function Season() {
     return (
       <div className="mister-page">
         <div className="setup-prompt" style={{ paddingTop: 26 }}>
-          <div className="lbl">Evento di giornata</div>
-          <h2>Cosa ti riserva il destino?</h2>
-          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>Dura per le prossime 4 partite</p>
+          <div className="lbl">Matchday event</div>
+          <h2>What does fate have in store?</h2>
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>Lasts for the next 4 matches</p>
         </div>
         <div className="page-scroll" style={{ flex: 1 }}>
           <div className="wheelwrap">
@@ -557,7 +557,7 @@ export default function Season() {
             <div className={`result-banner ${lastResult.outcome}`}>
               <span className="rbk">{lastResult.outcome === 'win' ? 'W' : lastResult.outcome === 'draw' ? 'D' : 'L'}</span>
               <div className="rres">
-                {lastResult.outcome === 'win' ? 'Vittoria' : lastResult.outcome === 'draw' ? 'Pareggio' : 'Sconfitta'}
+                {lastResult.outcome === 'win' ? 'Win' : lastResult.outcome === 'draw' ? 'Draw' : 'Defeat'}
               </div>
               <div className="rvs">{teamName} vs {lastResult.opponent}</div>
               <div className="rscore">{lastResult.goalsFor} – {lastResult.goalsAgainst}</div>
@@ -585,12 +585,12 @@ export default function Season() {
             <div className="gcrest">{(teamName || 'M')[0]}</div>
             <div>
               <b>{teamName}</b>
-              <small>{isSecondLeg ? 'Ritorno' : 'Andata'} · G{nextMatch.next?.matchday}</small>
+              <small>{isSecondLeg ? 'Second Leg' : 'First Leg'} · MD{nextMatch.next?.matchday}</small>
             </div>
           </div>
           <button className="gpill" onClick={fetchLiveStandings} disabled={loadingStandings || playedMatches.length === 0}>
             <b>📊</b>
-            <span>{loadingStandings ? '...' : 'Classifica'}</span>
+            <span>{loadingStandings ? '...' : 'Standings'}</span>
           </button>
         </div>
 
@@ -604,13 +604,13 @@ export default function Season() {
                 <div className="mcrest">{(nextMatch.next?.opponent || 'O')[0]}</div>
                 <div>
                   <b>{nextMatch.next?.opponent}</b>
-                  <small>Giornata {nextMatch.next?.matchday}/{nextMatch.totalMatches}</small>
+                  <small>Matchday {nextMatch.next?.matchday}/{nextMatch.totalMatches}</small>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {activeEvent && !showEventBanner && (
                   <span
-                    title={`${activeEvent.type === 'bonus' ? 'BONUS' : 'MALUS'}: ${activeEvent.text} (${eventMatchesLeft} rimaste)`}
+                    title={`${activeEvent.type === 'bonus' ? 'BONUS' : 'MALUS'}: ${activeEvent.text} (${eventMatchesLeft} left)`}
                     style={{
                       fontSize: 20, lineHeight: 1,
                       filter: activeEvent.type === 'malus' ? 'drop-shadow(0 0 4px #FB5566)' : 'drop-shadow(0 0 4px #16C784)',
@@ -620,12 +620,12 @@ export default function Season() {
                     {activeEvent.emoji}
                   </span>
                 )}
-                <span className="ha-badge">{nextMatch.next?.homeGame ? 'Casa' : 'Trasferta'}</span>
+                <span className="ha-badge">{nextMatch.next?.homeGame ? 'Home' : 'Away'}</span>
               </div>
             </div>
 
             <div className="forza">
-              <span className="flbl">Avversario</span>
+              <span className="flbl">Opponent</span>
               <div className="bars">
                 {[1, 2, 3, 4, 5].map(n => <i key={n} className={n <= forza ? 'f' : ''} />)}
               </div>
@@ -638,9 +638,9 @@ export default function Season() {
               <span className="ps" style={{ width: `${adjProbs.loss}%` }}>{adjProbs.loss}%</span>
             </div>
             <div className="prob-key">
-              <span><i style={{ background: 'var(--win)' }} />Vittoria</span>
-              <span><i style={{ background: 'var(--draw)' }} />Pareggio</span>
-              <span><i style={{ background: 'var(--loss)' }} />Sconfitta</span>
+              <span><i style={{ background: 'var(--win)' }} />Win</span>
+              <span><i style={{ background: 'var(--draw)' }} />Draw</span>
+              <span><i style={{ background: 'var(--loss)' }} />Defeat</span>
             </div>
           </div>
 
@@ -649,9 +649,9 @@ export default function Season() {
             <div className="wheelwrap" style={{ marginTop: 18 }}>
               <SpinWheelBase
                 items={[
-                  { label: 'VITTORIA', result: 'win', color: SEG_COLORS_MATCH.win, prob: adjProbs.win },
-                  { label: 'PAREGGIO', result: 'draw', color: SEG_COLORS_MATCH.draw, prob: adjProbs.draw },
-                  { label: 'SCONFITTA', result: 'loss', color: SEG_COLORS_MATCH.loss, prob: adjProbs.loss },
+                  { label: 'WIN', result: 'win', color: SEG_COLORS_MATCH.win, prob: adjProbs.win },
+                  { label: 'DRAW', result: 'draw', color: SEG_COLORS_MATCH.draw, prob: adjProbs.draw },
+                  { label: 'LOSS', result: 'loss', color: SEG_COLORS_MATCH.loss, prob: adjProbs.loss },
                 ]}
                 onResult={handleWheelResult}
                 locked={locked}
@@ -683,7 +683,7 @@ export default function Season() {
       </div>
       <div className="page-scroll" style={{ flex: 1 }}>
         <StatsBar />
-        <div className="section-title">Risultati</div>
+        <div className="section-title">Results</div>
         <div style={{ padding: '0 22px' }}>
           {matchList.filter(m => m.played).sort((a, b) => a.matchday - b.matchday).map(m => {
             const win = m.goalsFor > m.goalsAgainst
@@ -693,7 +693,7 @@ export default function Season() {
                 <span className="rnum">{m.matchday}</span>
                 <span className="rnm">{m.opponent}</span>
                 <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: win ? 'var(--win)' : draw ? 'var(--draw)' : 'var(--loss)' }}>
-                  {win ? 'V' : draw ? 'P' : 'S'}
+                  {win ? 'W' : draw ? 'D' : 'L'}
                 </span>
                 <span className="rovr">{m.goalsFor}–{m.goalsAgainst}</span>
               </div>
@@ -708,7 +708,7 @@ export default function Season() {
         <div style={{ height: 100 }} />
       </div>
       <div className="screen-foot">
-        <button onClick={finishSeason} className="btn primary">VEDI RISULTATO FINALE ▶</button>
+        <button onClick={finishSeason} className="btn primary">SEE FINAL RESULT ▶</button>
       </div>
     </div>
   )
