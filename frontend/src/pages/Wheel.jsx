@@ -453,8 +453,7 @@ export default function Wheel() {
                       className="opt"
                       style={{ flex: 1, padding: '8px 4px', textAlign: 'center', minWidth: 0 }}
                     >
-                      <b style={{ fontSize: 20, letterSpacing: 0 }}>{l.country}</b>
-                      <small style={{ display: 'block' }}>{l.code}</small>
+                      <b style={{ fontSize: 13 }}>{l.name}</b>
                     </button>
                   ))}
                 </div>
