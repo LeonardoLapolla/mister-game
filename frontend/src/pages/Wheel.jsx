@@ -216,7 +216,7 @@ export default function Wheel() {
   const [error, setError] = useState(null)
 
   const getWheelItems = () => {
-    if (step === 'league')    return LEAGUES.map(l => ({ ...l, label: l.country + ' ' + l.name }))
+    if (step === 'league')    return LEAGUES.map(l => ({ ...l, label: l.name }))
     if (step === 'budget')    return BUDGETS.map(b => ({ ...b, label: b.label }))
     if (step === 'formation') return FORMATIONS.map(f => ({ ...f, label: f.id }))
     if (step === 'players')   return wheelPlayers.map(p => ({ ...p, label: p.name }))
@@ -422,7 +422,7 @@ export default function Wheel() {
             {result && step !== 'players' && (
               <div className="result-tag">
                 <b>
-                  {step === 'league' && `${result.country} ${result.name}`}
+                  {step === 'league' && result.name}
                   {step === 'budget' && result.label}
                   {step === 'formation' && result.id}
                 </b>
