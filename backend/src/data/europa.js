@@ -221,42 +221,25 @@ function buildEuropaGroup(competition, playerLeague, simulatedLeagueTeams, playe
  * ogni squadra gioca esattamente matchesPerTeam partite contro avversarie diverse
  */
 function generateLeaguePhaseFixtures(n, matchesPerTeam) {
-  const allPairs = []
-  for (let i = 0; i < n; i++)
-    for (let j = i + 1; j < n; j++)
-      allPairs.push([i, j])
-
-  for (let attempt = 0; attempt < 200; attempt++) {
-    // Fisher-Yates shuffle
-    for (let i = allPairs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[allPairs[i], allPairs[j]] = [allPairs[j], allPairs[i]]
-    }
-
-    const needed = new Array(n).fill(matchesPerTeam)
-    const fixtures = []
-
-    for (const [i, j] of allPairs) {
-      if (needed[i] > 0 && needed[j] > 0) {
-        fixtures.push([i, j])
-        needed[i]--
-        needed[j]--
-      }
-    }
-
-    if (needed.every(v => v === 0)) return fixtures
+  // Grafo circolante: ogni squadra gioca contro le n a distanza d=1..matchesPerTeam/2
+  // nell'anello, garantendo esattamente matchesPerTeam partite per squadra per costruzione.
+  const perm = Array.from({ length: n }, (_, i) => i)
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[perm[i], perm[j]] = [perm[j], perm[i]]
   }
 
-  // fallback: restituisce l'ultimo tentativo anche se incompleto
-  const needed = new Array(n).fill(matchesPerTeam)
   const fixtures = []
-  for (const [i, j] of allPairs) {
-    if (needed[i] > 0 && needed[j] > 0) {
-      fixtures.push([i, j])
-      needed[i]--
-      needed[j]--
+  const halfK = matchesPerTeam / 2
+
+  for (let d = 1; d <= halfK; d++) {
+    for (let i = 0; i < n; i++) {
+      const j = (i + d) % n
+      if (i < j) fixtures.push([perm[i], perm[j]])
+      else if (i > j) fixtures.push([perm[j], perm[i]])
     }
   }
+
   return fixtures
 }
 

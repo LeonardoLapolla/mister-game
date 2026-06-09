@@ -13,10 +13,10 @@ const LEAGUES = [
 ]
 
 const BUDGET_OPTIONS = [
-  { value: 10, label: '10M', maxRating: 74, color: '#FB5566' },
-  { value: 20, label: '20M', maxRating: 76, color: '#F5B43C' },
-  { value: 30, label: '30M', maxRating: 78, color: '#16C784' },
-  { value: 50, label: '50M', minRating: 75, maxRating: 84, color: '#0EA5E9' },
+  { value: 10, label: '10M', maxRating: 78, color: '#FB5566' },
+  { value: 20, label: '20M', maxRating: 82, color: '#F5B43C' },
+  { value: 30, label: '30M', maxRating: 86, color: '#16C784' },
+  { value: 50, label: '50M', minRating: 78, maxRating: 99, color: '#0EA5E9' },
 ]
 
 const ROLE_LABELS = { GK: 'Portiere', DEF: 'Difensore', MID: 'Centrocampista', ATT: 'Attaccante' }
@@ -260,7 +260,7 @@ export default function Transfer() {
       { label: '3', value: 3, color: '#FB5566' },
     ]
     if (step === 'signing') {
-      if (signingStep === 'league') return LEAGUES.map(l => ({ ...l, label: l.country + ' ' + l.name }))
+      if (signingStep === 'league') return LEAGUES.map(l => ({ ...l, label: l.name }))
       if (signingStep === 'role') return [
         { label: 'P', value: 'GK', color: '#F5B43C' },
         { label: 'D', value: 'DEF', color: '#2E6BFF' },
@@ -362,7 +362,7 @@ export default function Transfer() {
     if (step === 'budget') return `${result.label} a disposizione`
     if (step === 'count') return `${result.value} acquist${result.value === 1 ? 'o' : 'i'}`
     if (step === 'signing') {
-      if (signingStep === 'league') return `${result.country} ${result.name}`
+      if (signingStep === 'league') return result.name
       if (signingStep === 'role') return ROLE_LABELS[result.value] || result.label
       if (signingStep === 'player') return `${result.name} · OVR ${result.rating}`
       if (signingStep === 'replace') return `Fuori ${result.name}`

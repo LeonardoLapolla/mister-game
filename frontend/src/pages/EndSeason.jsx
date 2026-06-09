@@ -329,7 +329,7 @@ export default function EndSeason() {
   ]
 
   const getSigningWheelItems = () => {
-    if (signingStep === 'league') return LEAGUES.map(l => ({ ...l, label: l.country + ' ' + l.name }))
+    if (signingStep === 'league') return LEAGUES.map(l => ({ ...l, label: l.name }))
     if (signingStep === 'role') return [
       { label: 'P', value: 'GK', color: '#F5B43C' }, { label: 'D', value: 'DEF', color: '#2E6BFF' },
       { label: 'C', value: 'MID', color: '#16C784' }, { label: 'A', value: 'ATT', color: '#FB5566' },
@@ -402,7 +402,7 @@ export default function EndSeason() {
     if (phase === 'budget') return `${result.label} a disposizione`
     if (phase === 'count') return `${result.value} acquisti`
     if (phase === 'signing') {
-      if (signingStep === 'league') return `${result.country} ${result.name}`
+      if (signingStep === 'league') return result.name
       if (signingStep === 'role') return ROLE_LABELS[result.value] || result.label
       if (signingStep === 'player') return `${result.name} · OVR ${result.rating}`
       if (signingStep === 'replace') return `Fuori ${result.name}`
