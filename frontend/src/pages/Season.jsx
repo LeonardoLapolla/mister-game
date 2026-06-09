@@ -262,6 +262,16 @@ export default function Season() {
           }
         }
         await fetchNextMatch(true)
+      } else if (allMatches.length > 0 && !data.session.finished) {
+        // Tutte le partite giocate ma stagione non conclusa: siamo all'half-time in modalità auto
+        const calData = data.session.calendarData ? JSON.parse(data.session.calendarData) : null
+        if (calData?.secondLeg?.length > 0) {
+          const stdRes = await fetch(`/api/match/${sessionId}/standings/${allMatches.length}`)
+          const stdData = await stdRes.json()
+          setMode('auto')
+          setHalfTime(true)
+          setHalfTimeStandings(stdData.standings || [])
+        }
       }
     } catch (err) {
       setError('Errore nel caricamento')
