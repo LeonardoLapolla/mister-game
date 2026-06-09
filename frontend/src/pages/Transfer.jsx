@@ -13,9 +13,10 @@ const LEAGUES = [
 ]
 
 const BUDGET_OPTIONS = [
-  { value: 10, label: '10M', maxRating: 76 },
-  { value: 20, label: '20M', maxRating: 82 },
-  { value: 30, label: '30M', maxRating: 88 },
+  { value: 10, label: '10M', maxRating: 74, color: '#FB5566' },
+  { value: 20, label: '20M', maxRating: 76, color: '#F5B43C' },
+  { value: 30, label: '30M', maxRating: 78, color: '#16C784' },
+  { value: 50, label: '50M', minRating: 75, maxRating: 84, color: '#0EA5E9' },
 ]
 
 const ROLE_LABELS = { GK: 'Portiere', DEF: 'Difensore', MID: 'Centrocampista', ATT: 'Attaccante' }
@@ -249,7 +250,7 @@ export default function Transfer() {
       { label: 'SI!', value: true, color: '#0FA56C' },
       { label: 'NO', value: false, color: '#FB5566' },
     ]
-    if (step === 'budget') return BUDGET_OPTIONS.map((b, i) => ({ ...b, label: b.label, color: i === 0 ? '#FB5566' : i === 1 ? '#F5B43C' : '#16C784' }))
+    if (step === 'budget') return BUDGET_OPTIONS.map(b => ({ ...b, label: b.label }))
     if (step === 'count') return [
       { label: '1', value: 1, color: '#16C784' },
       { label: '1', value: 1, color: '#0FA56C' },
@@ -286,7 +287,7 @@ export default function Transfer() {
         const myNames = myPlayers.map(p => p.name)
         const available = leaguePlayers
           .filter(p => p.position === item.value)
-          .filter(p => p.rating <= (budget?.maxRating || 99))
+          .filter(p => p.rating >= (budget?.minRating || 0) && p.rating <= (budget?.maxRating || 99))
           .filter(p => !myNames.includes(p.name))
           .slice(0, 20)
         setWheelItems(available.map(p => ({ ...p, label: p.name })))
