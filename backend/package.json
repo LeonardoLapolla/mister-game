@@ -13,10 +13,10 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@vercel/analytics": "^2.0.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "prisma": "^5.22.0"
   }
-
 }

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 640" width="100%" role="img" style="">
+  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Mister Roulette OG Image</title>
+  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Immagine di anteprima per Mister Roulette, gioco football manager con ruota della fortuna</desc>
+
+  <defs>
+    <radialGradient id="bgGlow" cx="35%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0d2f1e"/>
+      <stop offset="100%" stop-color="#050d08"/>
+    </radialGradient>
+    <radialGradient id="wheelGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#16C784" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#16C784" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hub" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#5BE3B0"/>
+      <stop offset="100%" stop-color="#16C784"/>
+    </radialGradient>
+  <mask id="imagine-text-gaps-hfp7jz" maskUnits="userSpaceOnUse"><rect x="0" y="0" width="1210" height="640" fill="white"/><rect x="305.79193115234375" y="266.088623046875" width="68.41619873046875" height="94.07809448242188" fill="black" rx="2"/><rect x="637.6900024414062" y="131.78848266601562" width="409.2202453613281" height="139.78939819335938" fill="black" rx="2"/><rect x="637.6900024414062" y="221.7884979248047" width="566.28271484375" height="139.7893829345703" fill="black" rx="2"/><rect x="637.6900024414062" y="372.4554443359375" width="314.41497802734375" height="34.92233848571777" fill="black" rx="2"/><rect x="637.6900024414062" y="410.4554748535156" width="391.370361328125" height="34.92233848571777" fill="black" rx="2"/><rect x="719.6568603515625" y="475.2110595703125" width="50.75347900390625" height="22.82229232788086" fill="black" rx="2"/><rect x="875.1080322265625" y="475.2110595703125" width="97.8675537109375" height="22.82229232788086" fill="black" rx="2"/><rect x="1067.888671875" y="475.2110595703125" width="70.29903793334961" height="22.82229232788086" fill="black" rx="2"/><rect x="637.6900024414062" y="557.833251953125" width="181.58108520507812" height="28.200092315673828" fill="black" rx="2"/></mask></defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGlow)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Subtle grid lines -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="#16C784" stroke-opacity="0.06" stroke-width="1" mask="url(#imagine-text-gaps-hfp7jz)" style="fill:rgb(0, 0, 0);stroke:rgb(22, 199, 132);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="#16C784" stroke-opacity="0.06" stroke-width="1" mask="url(#imagine-text-gaps-hfp7jz)" style="fill:rgb(0, 0, 0);stroke:rgb(22, 199, 132);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="#16C784" stroke-opacity="0.06" stroke-width="1" style="fill:rgb(0, 0, 0);stroke:rgb(22, 199, 132);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="#16C784" stroke-opacity="0.06" stroke-width="1" mask="url(#imagine-text-gaps-hfp7jz)" style="fill:rgb(0, 0, 0);stroke:rgb(22, 199, 132);color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Wheel glow halo -->
+  <circle cx="340" cy="315" r="280" fill="url(#wheelGlow)" style="stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Wheel segments -->
+  <path d="M340,315 L340,95 A220,220 0 0,1 530.5,205 Z" fill="#16C784" style="fill:rgb(22, 199, 132);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path d="M340,315 L530.5,205 A220,220 0 0,1 530.5,425 Z" fill="#102a1e" style="fill:rgb(16, 42, 30);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path d="M340,315 L530.5,425 A220,220 0 0,1 340,535 Z" fill="#5BE3B0" style="fill:rgb(91, 227, 176);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path d="M340,315 L340,535 A220,220 0 0,1 149.5,425 Z" fill="#0e2118" style="fill:rgb(14, 33, 24);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path d="M340,315 L149.5,425 A220,220 0 0,1 149.5,205 Z" fill="#0FA56C" style="fill:rgb(15, 165, 108);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path d="M340,315 L149.5,205 A220,220 0 0,1 340,95 Z" fill="#102a1e" style="fill:rgb(16, 42, 30);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Wheel outer ring -->
+  <circle cx="340" cy="315" r="220" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3" style="fill:none;stroke:rgba(255, 255, 255, 0.08);color:rgb(255, 255, 255);stroke-width:3px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- Wheel inner separator -->
+  <circle cx="340" cy="315" r="194" fill="none" stroke="#050d08" stroke-width="8" style="fill:none;stroke:rgb(5, 13, 8);color:rgb(255, 255, 255);stroke-width:8px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Hub -->
+  <circle cx="340" cy="315" r="72" fill="#16C784" style="fill:rgb(22, 199, 132);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <circle cx="340" cy="315" r="72" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" style="fill:none;stroke:rgba(255, 255, 255, 0.35);color:rgb(255, 255, 255);stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- M letter in hub -->
+  <text x="340" y="338" text-anchor="middle" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="64" fill="#04130D" style="fill:rgb(4, 19, 13);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Arial Black&quot;, Impact, sans-serif;font-size:64px;font-weight:900;text-anchor:middle;dominant-baseline:auto">M</text>
+
+  <!-- Pointer triangle -->
+  <polygon points="340,92 324,108 356,108" fill="#5BE3B0" style="fill:rgb(91, 227, 176);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Right side content -->
+  <!-- Main title -->
+  <text x="641.69" y="240" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="96" fill="#ffffff" letter-spacing="-2" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Arial Black&quot;, Impact, sans-serif;font-size:96px;font-weight:900;text-anchor:start;dominant-baseline:auto">MISTER</text>
+  <text x="641.69" y="330" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-size="96" fill="#16C784" letter-spacing="-2" style="fill:rgb(22, 199, 132);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Arial Black&quot;, Impact, sans-serif;font-size:96px;font-weight:900;text-anchor:start;dominant-baseline:auto">ROULETTE</text>
+
+  <!-- Divider -->
+  <rect x="680" y="355" width="80" height="4" rx="2" fill="#16C784" style="fill:rgb(22, 199, 132);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Subtitle -->
+  <text x="641.69" y="400" font-family="Arial, sans-serif" font-weight="400" font-size="28" fill="rgba(255,255,255,0.6)" style="fill:rgba(255, 255, 255, 0.6);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Arial, sans-serif;font-size:28px;font-weight:400;text-anchor:start;dominant-baseline:auto">Il gioco football manager</text>
+  <text x="641.69" y="438" font-family="Arial, sans-serif" font-weight="400" font-size="28" fill="rgba(255,255,255,0.6)" style="fill:rgba(255, 255, 255, 0.6);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Arial, sans-serif;font-size:28px;font-weight:400;text-anchor:start;dominant-baseline:auto">basato sulla ruota della fortuna</text>
+
+  <!-- Pills -->
+  <rect x="680" y="468" width="130" height="38" rx="19" fill="rgba(22,199,132,0.15)" stroke="#16C784" stroke-width="1.5" style="fill:rgba(22, 199, 132, 0.15);stroke:rgb(22, 199, 132);color:rgb(255, 255, 255);stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <text x="745" y="492" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#16C784" style="fill:rgb(22, 199, 132);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Arial, sans-serif;font-size:16px;font-weight:700;text-anchor:middle;dominant-baseline:auto">FREE</text>
+
+  <rect x="824" y="468" width="200" height="38" rx="19" fill="rgba(22,199,132,0.15)" stroke="#16C784" stroke-width="1.5" style="fill:rgba(22, 199, 132, 0.15);stroke:rgb(22, 199, 132);color:rgb(255, 255, 255);stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <text x="924" y="492" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#16C784" style="fill:rgb(22, 199, 132);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Arial, sans-serif;font-size:16px;font-weight:700;text-anchor:middle;dominant-baseline:auto">NO SIGNUP</text>
+
+  <rect x="1038" y="468" width="130" height="38" rx="19" fill="rgba(22,199,132,0.15)" stroke="#16C784" stroke-width="1.5" style="fill:rgba(22, 199, 132, 0.15);stroke:rgb(22, 199, 132);color:rgb(255, 255, 255);stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <text x="1103" y="492" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#16C784" style="fill:rgb(22, 199, 132);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Arial, sans-serif;font-size:16px;font-weight:700;text-anchor:middle;dominant-baseline:auto">MOBILE</text>
+
+  <!-- Domain -->
+  <text x="641.69" y="580" font-family="Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.35)" style="fill:rgba(255, 255, 255, 0.35);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:Arial, sans-serif;font-size:22px;font-weight:400;text-anchor:start;dominant-baseline:auto">misteroulette.com</text>
+</svg>
