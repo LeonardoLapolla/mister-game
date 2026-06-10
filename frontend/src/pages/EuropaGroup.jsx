@@ -73,7 +73,7 @@ export default function EuropaGroup() {
   const competition = europaState?.competition
   const themeClass = COMP_THEME[competition] || 'theme-conference'
   const info = COMP_INFO[competition] || COMP_INFO.conference
-  const teamName = session?.nickname || 'La Tua Squadra'
+  const teamName = session?.nickname || 'Your Team'
   const standings = europaState?.standings || []
   const playerStats = europaState?.playerStats || {}
   const groupPosition = europaState?.groupPosition

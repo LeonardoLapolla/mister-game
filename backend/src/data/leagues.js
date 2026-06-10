@@ -137,9 +137,9 @@ const leagues = {
 };
 
 const budgetOptions = [
-  { value: 30, label: "30M", multiplier: 2.0, description: "Difficile — massimo punteggio" },
-  { value: 50, label: "50M", multiplier: 1.5, description: "Equilibrato" },
-  { value: 100, label: "100M", multiplier: 1.0, description: "Facile — punteggio base" },
+  { value: 30, label: "30M", multiplier: 2.0, description: "Hard — max score" },
+  { value: 50, label: "50M", multiplier: 1.5, description: "Balanced" },
+  { value: 100, label: "100M", multiplier: 1.0, description: "Easy — base score" },
 ];
 
 const formations = [

@@ -31,15 +31,27 @@ function calculateFinalScore(position, totalTeams, budget, leagueMultiplier, avg
   return Math.round(rawScore);
 }
 
-function getPositionLabel(position) {
-  if (position === 1) return "🏆 Campione!";
-  if (position === 2) return "🥈 Vicecampione";
-  if (position === 3) return "🥉 Terzo posto";
-  if (position <= 6) return "⭐ Qualificato in Europa";
-  if (position <= 10) return "👍 Metà classifica";
-  if (position <= 15) return "😅 Salvezza tranquilla";
-  if (position <= 17) return "😰 Salvezza sofferta";
-  return "💀 Retrocesso";
+const ZONE_MAP = {
+  PL: { champions: [1,2,3,4,5,6], europa: [7,8], conference: [9], relegMin: 18 },
+  SA: { champions: [1,2,3,4], europa: [5,6], conference: [7], relegMin: 18 },
+  BL: { champions: [1,2,3,4], europa: [5,6], conference: [7], relegMin: 16 },
+  LL: { champions: [1,2,3,4], europa: [5,6], conference: [7], relegMin: 18 },
+  L1: { champions: [1,2,3], europa: [4,5,6], conference: [7], relegMin: 18 },
+}
+
+function getPositionLabel(position, league) {
+  if (position === 1) return "🏆 Champion!";
+  if (position === 2) return "🥈 Runner-up";
+  if (position === 3) return "🥉 3rd Place";
+
+  const z = ZONE_MAP[league] || ZONE_MAP.SA;
+  if (z.champions.includes(position)) return "⭐ Champions League";
+  if (z.europa.includes(position))    return "🟠 Europa League";
+  if (z.conference.includes(position)) return "🟢 Conference League";
+  if (position >= z.relegMin)         return "💀 Relegated";
+  if (position >= z.relegMin - 2)     return "😰 Barely survived";
+  if (position >= z.relegMin - 6)     return "😅 Safe";
+  return "👍 Mid-table";
 }
 
 module.exports = { calculateFinalScore, getPositionLabel, calculateStrengthMultiplier };

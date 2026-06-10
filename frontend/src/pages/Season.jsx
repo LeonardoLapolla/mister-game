@@ -394,7 +394,7 @@ export default function Season() {
   const points = wins * 3 + draws
   const goalsFor = playedMatches.reduce((s, m) => s + m.goalsFor, 0)
   const goalsAgainst = playedMatches.reduce((s, m) => s + m.goalsAgainst, 0)
-  const teamName = session?.nickname || 'La Tua Squadra'
+  const teamName = session?.nickname || 'Your Team'
 
   const baseProbs = nextMatch?.probs || { win: 33, draw: 33, loss: 34 }
   const aw = Math.min(80, Math.max(5, baseProbs.win + (activeEvent?.win || 0)))

@@ -205,7 +205,7 @@ export default function EuropaKnockout() {
   const competition = europaState?.competition
   const themeClass = COMP_THEME[competition] || 'theme-conference'
   const info = COMP_INFO[competition] || COMP_INFO.conference
-  const teamName = session?.nickname || 'La Tua Squadra'
+  const teamName = session?.nickname || 'Your Team'
   const currentRound = europaState?.knockoutRound
   const roundLabel = ROUND_LABELS[currentRound] || currentRound
   const currentRoundMatches = europaState?.knockoutMatches?.filter(m => m.round === currentRound) || []

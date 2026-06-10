@@ -285,7 +285,7 @@ router.post("/:sessionId/finish", async (req, res) => {
       });
     }
 
-    const label = getPositionLabel(position);
+    const label = getPositionLabel(position, session.league);
     res.json({ position, finalScore, label, standings });
   } catch (error) {
     console.error(error);

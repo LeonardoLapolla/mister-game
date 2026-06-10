@@ -47,7 +47,7 @@ export default function Home() {
           <div className="meta">
             <span>5 leagues</span>
             <span>·</span>
-            <span>38 matches</span>
+            <span>40 matches</span>
             <span>·</span>
             <span>∞ challenges</span>
           </div>

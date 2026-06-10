@@ -265,7 +265,7 @@ export default function Transfer() {
         { label: 'GK', value: 'GK', color: '#F5B43C' },
         { label: 'DEF', value: 'DEF', color: '#2E6BFF' },
         { label: 'MID', value: 'MID', color: '#16C784' },
-        { label: 'ATT', value: 'ATT', color: '#FB5566' },
+        { label: 'FW', value: 'ATT', color: '#FB5566' },
       ]
       if (signingStep === 'player') return wheelItems
       if (signingStep === 'replace') return wheelItems
@@ -343,8 +343,8 @@ export default function Transfer() {
   }
 
   const getStepPrompt = () => {
-    const a = `Trattativa ${currentSigning + 1} di ${signingCount}`
-    if (step === 'yesno') return ['Transfer window opens', 'Open the January window?']
+    const a = `Deal ${currentSigning + 1} of ${signingCount}`
+    if (step === 'yesno') return ['Transfer window opens', 'Open the Winter window?']
     if (step === 'budget') return ['Transfer budget', 'Available budget']
     if (step === 'count') return ['Transfer plan', 'How many signings?']
     if (step === 'signing') {
@@ -353,7 +353,7 @@ export default function Transfer() {
       if (signingStep === 'player') return [a, 'The signing you dream of']
       if (signingStep === 'replace') return [a, 'Who makes way?']
     }
-    return ['Deadline Day', 'January window']
+    return ['Deadline Day', 'Winter window']
   }
 
   const getResultLabel = () => {
@@ -387,7 +387,7 @@ export default function Transfer() {
   if (step === 'summary') {
     return (
       <div className="mister-page mkt fade-key">
-        <DeadlineBar heading="Deadline Day · Gennaio" />
+        <DeadlineBar heading="Deadline Day · Winter" />
         <div className="page-scroll mkt-scroll" style={{ flex: 1 }}>
           <div className="mkt-close">
             <span className="mkt-close-gong">● Gong</span>
@@ -427,7 +427,7 @@ export default function Transfer() {
     const delta = (pendingTransfer.in.rating || 0) - (pendingTransfer.out.rating || 0)
     return (
       <div className="mister-page mkt fade-key">
-        <DeadlineBar heading="Deadline Day · Gennaio" />
+        <DeadlineBar heading="Deadline Day · Winter" />
         <div className="page-scroll mkt-scroll" style={{ flex: 1 }}>
           <div className="brk">
             <div className="brk-flash"><span className="brk-bolt">⚡</span>Breaking news</div>
@@ -497,7 +497,7 @@ export default function Transfer() {
   const [kick, title] = getStepPrompt()
   return (
     <div className="mister-page mkt fade-key">
-      <DeadlineBar heading="Deadline Day · Gennaio" />
+      <DeadlineBar heading="Deadline Day · Winter" />
       <div className="page-scroll mkt-scroll" style={{ flex: 1 }}>
         <div className="mkt-lower3">
           <span className="mkt-l3-kick">{kick}</span>

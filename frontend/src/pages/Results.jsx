@@ -49,7 +49,7 @@ export default function Results() {
   }
 
   const totalTeams = data.standings.length
-  const teamName = session?.nickname || 'La Tua Squadra'
+  const teamName = session?.nickname || 'Your Team'
   const yourTeam = data.standings.find(s => s.name === 'La Tua Squadra') || {}
   const league = session?.league || 'SA'
   const quals = EUROPA_QUALS[league] || EUROPA_QUALS['SA']
