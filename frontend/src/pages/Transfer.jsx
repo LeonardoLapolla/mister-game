@@ -155,6 +155,14 @@ function SpinWheel({ items, onResult, resetKey }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      {spinning && (
+        <div
+          onClick={skipSpin}
+          style={{ position: 'fixed', inset: 0, zIndex: 100, cursor: 'pointer', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 96 }}
+        >
+          <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'rgba(255,255,255,.4)', letterSpacing: '.14em', textTransform: 'uppercase' }}>tap anywhere to skip</span>
+        </div>
+      )}
       <div style={{ position: 'relative' }}>
         <div style={{
           position: 'absolute', top: '50%', right: -14, transform: 'translateY(-50%)', zIndex: 10,
@@ -312,7 +320,7 @@ export default function Transfer() {
         setNewPlayer(item)
         const incomingNames = new Set(completedSignings.map(s => s.in.name))
         const myInRole = myPlayers.filter(p => p.position === item.position && !incomingNames.has(p.name))
-        setWheelItems(myInRole.map(p => ({ ...p, label: p.name })))
+        setWheelItems(myInRole.map(p => ({ ...p, label: p.isBench ? `${p.name} (B)` : p.name })))
         setPendingSigningStep('replace'); return
       } else if (signingStep === 'replace') {
         setPlayerToReplace(item)
@@ -346,10 +354,10 @@ export default function Transfer() {
       })
       await fetch(`/api/market/${sessionId}/buy`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerName: pendingTransfer.in.name }),
+        body: JSON.stringify({ playerName: pendingTransfer.in.name, isBench: pendingTransfer.out.isBench || false }),
       })
       setCompletedSignings(prev => [...prev, { in: pendingTransfer.in, out: pendingTransfer.out }])
-      setMyPlayers(prev => prev.filter(p => p.name !== pendingTransfer.out.name).concat({ ...pendingTransfer.in }))
+      setMyPlayers(prev => prev.filter(p => p.name !== pendingTransfer.out.name).concat({ ...pendingTransfer.in, isBench: pendingTransfer.out.isBench || false }))
       setPendingTransfer(null)
       skipToNextSigning()
     } catch (err) {

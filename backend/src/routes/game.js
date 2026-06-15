@@ -113,6 +113,11 @@ router.post("/:id/next-season", async (req, res) => {
 
     await prisma.match.deleteMany({ where: { sessionId: session.id } });
 
+    await prisma.player.updateMany({
+      where: { sessionId: session.id },
+      data: { energy: 100 },
+    });
+
     await prisma.session.update({
       where: { id: session.id },
       data: {
@@ -147,6 +152,61 @@ router.get("/:id/history", async (req, res) => {
 
 router.get("/data/setup", (req, res) => {
   res.json({ leagues, formations });
+});
+
+router.patch("/:id/formation", async (req, res) => {
+  try {
+    const { formation } = req.body;
+    const valid = ['4-3-3', '4-4-2', '3-5-2', '5-3-2', '4-2-3-1'];
+    if (!valid.includes(formation)) return res.status(400).json({ error: "Formazione non valida" });
+    const session = await prisma.session.update({
+      where: { id: req.params.id },
+      data: { formation },
+    });
+    res.json({ session });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errore aggiornamento formazione" });
+  }
+});
+
+router.patch("/:id/reset-energy", async (req, res) => {
+  try {
+    await prisma.player.updateMany({
+      where: { sessionId: req.params.id },
+      data: { energy: 100 },
+    });
+    const session = await prisma.session.findUnique({
+      where: { id: req.params.id },
+      include: { players: true },
+    });
+    res.json({ session });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errore reset energia" });
+  }
+});
+
+router.patch("/:id/bench", async (req, res) => {
+  try {
+    const { updates } = req.body;
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ error: "Payload non valido" });
+    }
+    await prisma.$transaction(
+      updates.map(({ playerId, isBench }) =>
+        prisma.player.update({ where: { id: playerId }, data: { isBench } })
+      )
+    );
+    const session = await prisma.session.findUnique({
+      where: { id: req.params.id },
+      include: { players: true },
+    });
+    res.json({ session });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errore aggiornamento panchina" });
+  }
 });
 
 module.exports = router;

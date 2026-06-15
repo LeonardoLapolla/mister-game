@@ -8,12 +8,14 @@ import Transfer from './pages/Transfer'
 import EndSeason from './pages/EndSeason'
 import EuropaGroup from './pages/EuropaGroup'
 import EuropaKnockout from './pages/EuropaKnockout'
+import Guide from './pages/Guide'
 
 export default function App() {
   return (
     <div>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/guide" element={<Guide />} />
         <Route path="/wheel" element={<Wheel />} />
         <Route path="/season/:sessionId" element={<Season />} />
         <Route path="/results/:sessionId" element={<Results />} />

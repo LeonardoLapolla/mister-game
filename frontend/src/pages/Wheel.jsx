@@ -161,6 +161,14 @@ function SpinWheel({ items, onResult, locked, onLock }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      {spinning && (
+        <div
+          onClick={skipSpin}
+          style={{ position: 'fixed', inset: 0, zIndex: 100, cursor: 'pointer', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 96 }}
+        >
+          <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'rgba(255,255,255,.4)', letterSpacing: '.14em', textTransform: 'uppercase' }}>tap anywhere to skip</span>
+        </div>
+      )}
       <div style={{ position: 'relative' }}>
         {/* pointer */}
         <div style={{
@@ -190,13 +198,25 @@ function SpinWheel({ items, onResult, locked, onLock }) {
   )
 }
 
-const STEPS = ['league', 'budget', 'formation', 'nickname', 'players']
+const BENCH_SLOTS = { GK: 1, DEF: 2, MID: 2, ATT: 2 }
+const BENCH_TOTAL = Object.values(BENCH_SLOTS).reduce((a, b) => a + b, 0)
+
+const FORMATION_ATTITUDE = {
+  '4-3-3': 'Offensive',
+  '3-5-2': 'Offensive',
+  '4-4-2': 'Balanced',
+  '4-2-3-1': 'Balanced',
+  '5-3-2': 'Defensive',
+}
+
+const STEPS = ['league', 'budget', 'formation', 'nickname', 'players', 'bench']
 const STEP_LABELS = {
   league: 'League',
   budget: 'Budget',
   formation: 'Formation',
   nickname: 'Team name',
   players: 'Players',
+  bench: 'Bench',
 }
 
 export default function Wheel() {
@@ -219,6 +239,9 @@ export default function Wheel() {
   const [wheelPlayers, setWheelPlayers] = useState([])
   const [playerLocked, setPlayerLocked] = useState(false)
 
+  const [benchSquad, setBenchSquad] = useState([])
+  const [benchPosition, setBenchPosition] = useState(null)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -226,7 +249,7 @@ export default function Wheel() {
     if (step === 'league')    return LEAGUES.map(l => ({ ...l, label: l.name }))
     if (step === 'budget')    return BUDGETS.map(b => ({ ...b, label: b.label }))
     if (step === 'formation') return FORMATIONS.map(f => ({ ...f, label: f.id }))
-    if (step === 'players')   return wheelPlayers.map(p => ({ ...p, label: p.name }))
+    if (step === 'players' || step === 'bench') return wheelPlayers.map(p => ({ ...p, label: p.name }))
     return []
   }
 
@@ -240,7 +263,13 @@ export default function Wheel() {
     setLocked(true)
   }
 
-  const handlePlayerResult = (player) => {
+  const handleManualFormation = (f) => {
+    setFormation(f)
+    setResult(f)
+    setLocked(true)
+  }
+
+  const handleStarterResult = (player) => {
     setResult(player)
     setPlayerLocked(true)
 
@@ -263,7 +292,44 @@ export default function Wheel() {
           setupWheelForPosition(nextPos, newSquad)
         }, 1500)
       } else {
-        setTimeout(() => saveSquad(newSquad), 1500)
+        // Titolari completi → inizia fase panchina
+        setTimeout(() => {
+          setStep('bench')
+          setResult(null)
+          setPlayerLocked(false)
+          startBenchPosition('GK', newSquad, [])
+        }, 1500)
+      }
+    } else {
+      setTimeout(() => {
+        setResult(null)
+        setPlayerLocked(false)
+      }, 1500)
+    }
+  }
+
+  const handleBenchResult = (player) => {
+    setResult(player)
+    setPlayerLocked(true)
+
+    const newBench = [...benchSquad, { ...player, position: benchPosition }]
+    setBenchSquad(newBench)
+    setWheelPlayers(prev => prev.filter(p => p.name !== player.name))
+
+    const pickedForPos = newBench.filter(p => p.position === benchPosition).length
+
+    if (pickedForPos >= BENCH_SLOTS[benchPosition]) {
+      const posIndex = POSITION_ORDER.indexOf(benchPosition)
+      const nextPos = POSITION_ORDER[posIndex + 1]
+
+      if (nextPos) {
+        setTimeout(() => {
+          setResult(null)
+          setPlayerLocked(false)
+          startBenchPosition(nextPos, squad, newBench)
+        }, 1500)
+      } else {
+        setTimeout(() => saveSquad(squad, newBench), 1500)
       }
     } else {
       setTimeout(() => {
@@ -275,12 +341,55 @@ export default function Wheel() {
 
   const setupWheelForPosition = (position, currentSquad = squad) => {
     const filter = BUDGET_FILTERS[budget?.value] || (() => true)
-    const squadNames = currentSquad.map(p => p.name)
+    const excluded = new Set(currentSquad.map(p => p.name))
     const available = allPlayers
       .filter(p => p.position === position)
       .filter(p => filter(p))
-      .filter(p => !squadNames.includes(p.name))
+      .filter(p => !excluded.has(p.name))
     setWheelPlayers(available)
+  }
+
+  const saveSquad = async (startersList, benchList = []) => {
+    setLoading(true)
+    try {
+      const payload = [
+        ...startersList.map(p => ({ playerName: p.name, isBench: false })),
+        ...benchList.map(p => ({ playerName: p.name, isBench: true })),
+      ]
+      const res = await fetch(`/api/market/${sessionId}/buy-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ players: payload }),
+      })
+      if (!res.ok) throw new Error('Error saving squad')
+      navigate(`/squad/${sessionId}`)
+    } catch (err) {
+      setError('Error saving squad')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Avanza alla prossima posizione panchina; auto-salta se pool vuoto
+  const startBenchPosition = (position, currentStarters, currentBench) => {
+    const filter = BUDGET_FILTERS[budget?.value] || (() => true)
+    const excluded = new Set([...currentStarters.map(p => p.name), ...currentBench.map(p => p.name)])
+    const available = allPlayers
+      .filter(p => p.position === position)
+      .filter(p => filter(p))
+      .filter(p => !excluded.has(p.name))
+
+    if (available.length > 0) {
+      setBenchPosition(position)
+      setWheelPlayers(available)
+    } else {
+      const nextPos = POSITION_ORDER[POSITION_ORDER.indexOf(position) + 1]
+      if (nextPos) {
+        startBenchPosition(nextPos, currentStarters, currentBench)
+      } else {
+        saveSquad(currentStarters, currentBench)
+      }
+    }
   }
 
   const createSession = async () => {
@@ -320,27 +429,6 @@ export default function Wheel() {
     }
   }
 
-  const saveSquad = async (finalSquad) => {
-    setLoading(true)
-    try {
-      for (const player of finalSquad) {
-        const res = await fetch(`/api/market/${sessionId}/buy`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ playerName: player.name }),
-        })
-        const data = await res.json()
-        if (!res.ok) console.error(`Errore acquisto ${player.name}:`, data.error)
-        await new Promise(r => setTimeout(r, 100))
-      }
-      navigate(`/squad/${sessionId}`)
-    } catch (err) {
-      setError('Error saving squad')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const nextStep = () => {
     const idx = STEPS.indexOf(step)
     setResult(null)
@@ -349,9 +437,13 @@ export default function Wheel() {
   }
 
   const slots = formation?.slots || {}
+  const totalStarterSlots = Object.values(slots).reduce((a, b) => a + b, 0)
   const currentPositionSlots = slots[currentPosition] || 0
   const currentPositionCount = squad.filter(p => p.position === currentPosition).length
+  const benchPositionSlots = BENCH_SLOTS[benchPosition] || 1
+  const benchPositionCount = benchSquad.filter(p => p.position === benchPosition).length
   const stepIdx = STEPS.indexOf(step)
+  const isPlayerStep = step === 'players' || step === 'bench'
 
   return (
     <div className="mister-page">
@@ -371,6 +463,7 @@ export default function Wheel() {
           {step === 'formation' && 'Formation'}
           {step === 'nickname' && 'Team name'}
           {step === 'players' && `${POSITION_LABELS[currentPosition]} — ${currentPositionCount}/${currentPositionSlots}`}
+          {step === 'bench' && `Bench ${POSITION_LABELS[benchPosition]} — ${benchPositionCount}/${benchPositionSlots}`}
         </h2>
       </div>
 
@@ -418,15 +511,16 @@ export default function Wheel() {
                   step === 'league' ? handleLeagueResult :
                   step === 'budget' ? handleBudgetResult :
                   step === 'formation' ? handleFormationResult :
-                  handlePlayerResult
+                  step === 'players' ? handleStarterResult :
+                  handleBenchResult
                 }
-                locked={step === 'players' ? playerLocked : locked}
-                onLock={() => step === 'players' ? setPlayerLocked(true) : setLocked(true)}
+                locked={isPlayerStep ? playerLocked : locked}
+                onLock={() => isPlayerStep ? setPlayerLocked(true) : setLocked(true)}
               />
             </div>
 
             {/* Result tag */}
-            {result && step !== 'players' && (
+            {result && !isPlayerStep && (
               <div className="result-tag">
                 <b>
                   {step === 'league' && result.name}
@@ -435,13 +529,13 @@ export default function Wheel() {
                 </b>
                 <span>
                   {step === 'budget' && result.description}
-                  {step === 'formation' && 'Formation'}
+                  {step === 'formation' && (FORMATION_ATTITUDE[result.id] || 'Balanced')}
                   {step === 'league' && 'League'}
                 </span>
               </div>
             )}
 
-            {result && step === 'players' && (
+            {result && isPlayerStep && (
               <div className="result-tag">
                 <b>{result.name}</b>
                 <span>OVR {result.rating}</span>
@@ -467,11 +561,33 @@ export default function Wheel() {
               </div>
             )}
 
-            {/* Accumulated squad */}
-            {step === 'players' && squad.length > 0 && (
+            {/* Manual formation choice */}
+            {step === 'formation' && !locked && (
+              <div style={{ padding: '16px 22px 0' }}>
+                <div className="section-title" style={{ paddingLeft: 0 }}>or choose yourself</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {FORMATIONS.map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => handleManualFormation(f)}
+                      className="opt"
+                      style={{ flex: '1 1 auto', padding: '10px 8px', textAlign: 'center', minWidth: 80 }}
+                    >
+                      <b style={{ fontSize: 15 }}>{f.id}</b>
+                      <small style={{ display: 'block', marginTop: 2, color: 'var(--muted)', fontSize: 11 }}>
+                        {FORMATION_ATTITUDE[f.id] || 'Balanced'}
+                      </small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Accumulated starters */}
+            {isPlayerStep && squad.length > 0 && (
               <div style={{ padding: '16px 22px 0' }}>
                 <div className="section-title" style={{ paddingLeft: 0 }}>
-                  Squad ({squad.length}/{Object.values(slots).reduce((a, b) => a + b, 0)})
+                  Starting 11 ({squad.length}/{totalStarterSlots})
                 </div>
                 <div className="roster" style={{ padding: 0 }}>
                   {squad.map((p, i) => (
@@ -485,15 +601,33 @@ export default function Wheel() {
               </div>
             )}
 
-            {loading && step === 'players' && (
+            {/* Accumulated bench */}
+            {step === 'bench' && benchSquad.length > 0 && (
+              <div style={{ padding: '8px 22px 0' }}>
+                <div className="section-title" style={{ paddingLeft: 0 }}>
+                  Bench ({benchSquad.length}/{BENCH_TOTAL})
+                </div>
+                <div className="roster" style={{ padding: 0 }}>
+                  {benchSquad.map((p, i) => (
+                    <div key={i} className="rrow">
+                      <span className="rrole">{p.position}</span>
+                      <span className="rnm">{p.name}</span>
+                      <span className="rovr" style={{ color: 'var(--mkt-amber)' }}>{p.rating}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {loading && isPlayerStep && (
               <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '12px 0', fontFamily: 'var(--font-num)', fontSize: 12 }}>
                 Saving squad...
               </div>
             )}
           </div>
 
-          {/* CTA */}
-          {result && step !== 'players' && (
+          {/* CTA — only for non-player setup steps */}
+          {result && !isPlayerStep && (
             <div className="screen-foot">
               <button onClick={nextStep} className="btn primary">
                 {step === 'formation' ? 'CHOOSE YOUR NAME ▶' : 'NEXT ▶'}

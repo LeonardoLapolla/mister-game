@@ -137,6 +137,14 @@ function SpinWheelBase({ items, onResult, locked, onLock, size = 280 }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      {spinning && (
+        <div
+          onClick={skipSpin}
+          style={{ position: 'fixed', inset: 0, zIndex: 100, cursor: 'pointer', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 96 }}
+        >
+          <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'rgba(255,255,255,.4)', letterSpacing: '.14em', textTransform: 'uppercase' }}>tap anywhere to skip</span>
+        </div>
+      )}
       <div style={{ position: 'relative' }}>
         <div style={{
           position: 'absolute', top: '50%', right: -14, transform: 'translateY(-50%)', zIndex: 10,
@@ -155,6 +163,130 @@ function SpinWheelBase({ items, onResult, locked, onLock, size = 280 }) {
         style={{ opacity: (spinning || locked || items.length === 0) ? 0.45 : 1, width: 'auto', minWidth: 140 }}>
         {spinning ? 'SPINNING...' : locked ? 'SPUN ✓' : 'SPIN!'}
       </button>
+    </div>
+  )
+}
+
+const POS_COLORS = { GK: '#F5B43C', DEF: '#2E6BFF', MID: '#16C784', ATT: '#FB5566' }
+
+function EnergyBar({ energy }) {
+  const e = energy ?? 100
+  const color = e >= 70 ? 'var(--primary)' : e >= 40 ? 'var(--mkt-amber)' : 'var(--loss)'
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div style={{ width: 52, height: 5, background: 'var(--line)', borderRadius: 3, overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ width: `${e}%`, height: '100%', background: color, transition: 'width .3s' }} />
+      </div>
+      <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color, minWidth: 30, fontWeight: e < 40 ? 700 : 400 }}>{e}%</span>
+    </div>
+  )
+}
+
+function SquadDrawer({ open, onClose, players, onSwap }) {
+  const [selected, setSelected] = useState(null)
+  const [swapping, setSwapping] = useState(false)
+
+  useEffect(() => { if (!open) setSelected(null) }, [open])
+
+  if (!open) return null
+
+  // titolari ordinati per energia crescente: i più stanchi in cima
+  const starters = players.filter(p => !p.isBench).sort((a, b) => (a.energy ?? 100) - (b.energy ?? 100))
+  const bench = players.filter(p => p.isBench).sort((a, b) => (b.energy ?? 100) - (a.energy ?? 100))
+  const startersByPos = {}
+  for (const pos of ['GK', 'DEF', 'MID', 'ATT']) {
+    startersByPos[pos] = players.filter(p => !p.isBench && p.position === pos)
+  }
+
+  const handleBenchTap = (p) => {
+    if (swapping) return
+    setSelected(sel => sel?.id === p.id ? null : p)
+  }
+
+  const handleStarterTap = async (starterPlayer) => {
+    if (!selected || selected.position !== starterPlayer.position || swapping) return
+    setSwapping(true)
+    await onSwap(selected, starterPlayer)
+    setSelected(null)
+    setSwapping(false)
+  }
+
+  return (
+    <div className="drawer-wrap">
+      <div className="drawer-scrim" onClick={onClose} />
+      <div className="drawer">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 18px 10px' }}>
+          <div>
+            <p className="kicker">Lineup</p>
+            <h2 className="h-display" style={{ fontSize: 24 }}>Manage squad</h2>
+          </div>
+          <button className="btn dark btn-sm" onClick={onClose}>Done</button>
+        </div>
+
+        {selected && (
+          <div style={{ margin: '0 18px 8px', padding: '7px 12px', background: 'color-mix(in oklab,var(--primary) 12%,transparent)', border: '1px solid var(--primary)', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--primary)' }}>
+            {selected.name} selected — tap a {selected.position} starter to swap in
+          </div>
+        )}
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 12px' }}>
+          <div className="section-title" style={{ paddingLeft: 0 }}>Starting 11</div>
+          {['GK', 'DEF', 'MID', 'ATT'].map(pos =>
+            startersByPos[pos]?.map(p => {
+              const isTarget = selected?.position === p.position
+              return (
+                <div
+                  key={p.id}
+                  className="rrow"
+                  onClick={() => handleStarterTap(p)}
+                  style={{
+                    cursor: isTarget ? 'pointer' : 'default',
+                    outline: isTarget ? '1px dashed color-mix(in oklab,var(--primary) 50%,transparent)' : 'none',
+                    borderRadius: isTarget ? 'var(--r-sm)' : 0,
+                    background: isTarget ? 'color-mix(in oklab,var(--primary) 5%,transparent)' : undefined,
+                  }}
+                >
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: POS_COLORS[p.position], flexShrink: 0 }} />
+                  <span className="rrole">{p.position}</span>
+                  <span className="rnm">{p.name}</span>
+                  <EnergyBar energy={p.energy ?? 100} />
+                  <span className="rovr">{p.rating}</span>
+                </div>
+              )
+            })
+          )}
+
+          {bench.length > 0 && (
+            <>
+              <div className="section-title" style={{ paddingLeft: 0, marginTop: 4 }}>Bench — tap to select, then tap a starter</div>
+              {bench.map(p => {
+                const isSelected = selected?.id === p.id
+                const hasStarters = startersByPos[p.position]?.length > 0
+                return (
+                  <div
+                    key={p.id}
+                    className="rrow"
+                    onClick={() => hasStarters ? handleBenchTap(p) : undefined}
+                    style={{
+                      cursor: hasStarters ? 'pointer' : 'default',
+                      background: isSelected ? 'color-mix(in oklab,var(--primary) 12%,transparent)' : undefined,
+                      outline: isSelected ? '1px solid var(--primary)' : 'none',
+                      borderRadius: 'var(--r-sm)',
+                      opacity: hasStarters ? 1 : 0.45,
+                    }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: POS_COLORS[p.position], flexShrink: 0 }} />
+                    <span className="rrole">{p.position}</span>
+                    <span className="rnm">{p.name}</span>
+                    <EnergyBar energy={p.energy ?? 100} />
+                    <span className="rovr">{p.rating}</span>
+                  </div>
+                )
+              })}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -236,6 +368,8 @@ export default function Season() {
   const [showStandings, setShowStandings] = useState(false)
   const [liveStandings, setLiveStandings] = useState([])
   const [loadingStandings, setLoadingStandings] = useState(false)
+  const [showSquadDrawer, setShowSquadDrawer] = useState(false)
+  const [squadPlayers, setSquadPlayers] = useState([])
 
   const eventBatchBase = useRef(0)
 
@@ -253,6 +387,7 @@ export default function Season() {
       const res = await fetch(`/api/game/${sessionId}`)
       const data = await res.json()
       setSession(data.session)
+      setSquadPlayers(data.session.players || [])
       const matchRes = await fetch(`/api/match/${sessionId}`)
       const matchData = await matchRes.json()
       const allMatches = matchData.matches || []
@@ -295,11 +430,13 @@ export default function Season() {
     setEventMatchesLeft(4)
   }
 
-  const fetchNextMatch = async (skipHalfTime = false) => {
+  const fetchNextMatch = async (skipHalfTime = false, resetLock = true) => {
     const res = await fetch(`/api/match/${sessionId}/next-match${skipHalfTime ? '?skipHalfTime=true' : ''}`)
     const data = await res.json()
     if (data.halfTime) { setHalfTime(true); setHalfTimeStandings(data.standings); return data }
-    setNextMatch(data); setLastResult(null); setLocked(false)
+    setNextMatch(data)
+    setLastResult(null)
+    if (resetLock) setLocked(false)
     return data
   }
 
@@ -376,6 +513,42 @@ export default function Season() {
     } catch { setError('Error saving') } finally { setPlayingNext(false) }
   }
 
+  // Quando il drawer si apre, scarica le energie aggiornate dal server
+  useEffect(() => {
+    if (!showSquadDrawer) return
+    fetch(`/api/game/${sessionId}`)
+      .then(r => r.json())
+      .then(d => { setSquadPlayers(d.session.players || []); setSession(d.session) })
+      .catch(console.error)
+  }, [showSquadDrawer])
+
+  const handleSquadSwap = async (benchPlayer, starterPlayer) => {
+    try {
+      const res = await fetch(`/api/game/${sessionId}/bench`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updates: [
+            { playerId: starterPlayer.id, isBench: true },
+            { playerId: benchPlayer.id, isBench: false },
+          ],
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        // Aggiorna solo i giocatori nel drawer; il ricalcolo avviene alla chiusura
+        setSquadPlayers(data.session.players || [])
+        setSession(data.session)
+      }
+    } catch (err) { console.error(err) }
+  }
+
+  // Chiude il drawer e ricalcola forza + probabilità in un'unica chiamata
+  const handleSquadClose = async () => {
+    setShowSquadDrawer(false)
+    await fetchNextMatch(true, false)
+  }
+
   const continueSecondLeg = async () => {
     setHalfTime(false)
     navigate(mode === 'auto' ? `/transfer/${sessionId}?mode=auto` : `/transfer/${sessionId}`)
@@ -416,6 +589,17 @@ export default function Season() {
   const forza = nextMatch?.opponentStrength
     ? Math.min(5, Math.max(1, Math.ceil((nextMatch.opponentStrength - 70) / 3)))
     : 3
+
+  const FORMATION_ATTITUDE_MAP = {
+    '4-3-3': 'offensive', '3-5-2': 'offensive',
+    '4-4-2': 'balanced',  '4-2-3-1': 'balanced',
+    '5-3-2': 'defensive',
+  }
+  const ATTITUDE_COLORS = { offensive: 'var(--loss)', balanced: 'var(--mkt-amber)', defensive: 'var(--win)' }
+  const attitudeLabel = { offensive: 'OFF', balanced: 'BAL', defensive: 'DEF' }
+  const currentAttitude = nextMatch?.formationAttitude || FORMATION_ATTITUDE_MAP[session?.formation] || 'balanced'
+  const avgEnergy = nextMatch?.avgEnergy ?? 100
+  const energyColor = avgEnergy >= 70 ? 'var(--primary)' : avgEnergy >= 40 ? 'var(--mkt-amber)' : 'var(--loss)'
 
   const StatsBar = () => (
     <div className="stats-bar">
@@ -558,6 +742,12 @@ export default function Season() {
           teamName={teamName}
           league={session?.league}
         />
+        <SquadDrawer
+          open={showSquadDrawer}
+          onClose={handleSquadClose}
+          players={squadPlayers}
+          onSwap={handleSquadSwap}
+        />
 
         {/* Result overlay */}
         {lastResult && (
@@ -596,10 +786,16 @@ export default function Season() {
               <small>{isSecondLeg ? 'Second Leg' : 'First Leg'} · MD{nextMatch.next?.matchday}</small>
             </div>
           </div>
-          <button className="gpill" onClick={fetchLiveStandings} disabled={loadingStandings || playedMatches.length === 0}>
-            <b>📊</b>
-            <span>{loadingStandings ? '...' : 'Standings'}</span>
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="gpill" onClick={() => setShowSquadDrawer(true)} disabled={locked || playingNext}>
+              <b>👥</b>
+              <span>Squad</span>
+            </button>
+            <button className="gpill" onClick={fetchLiveStandings} disabled={loadingStandings || playedMatches.length === 0}>
+              <b>📊</b>
+              <span>{loadingStandings ? '...' : 'Standings'}</span>
+            </button>
+          </div>
         </div>
 
         <div className="page-scroll" style={{ flex: 1 }}>
@@ -615,7 +811,7 @@ export default function Season() {
                   <small>Matchday {nextMatch.next?.matchday}/{nextMatch.totalMatches}</small>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {activeEvent && !showEventBanner && (
                   <span
                     title={`${activeEvent.type === 'bonus' ? 'BONUS' : 'MALUS'}: ${activeEvent.text} (${eventMatchesLeft} left)`}
@@ -628,16 +824,26 @@ export default function Season() {
                     {activeEvent.emoji}
                   </span>
                 )}
+                <span style={{
+                  fontFamily: 'var(--font-num)', fontSize: 10, padding: '2px 7px',
+                  borderRadius: 4, border: `1px solid ${ATTITUDE_COLORS[currentAttitude]}`,
+                  background: `color-mix(in oklab,${ATTITUDE_COLORS[currentAttitude]} 12%,transparent)`,
+                  color: ATTITUDE_COLORS[currentAttitude],
+                }}>{attitudeLabel[currentAttitude]}</span>
+                <span style={{
+                  fontFamily: 'var(--font-num)', fontSize: 10, color: energyColor,
+                }}>⚡{avgEnergy}%</span>
                 <span className="ha-badge">{nextMatch.next?.homeGame ? 'Home' : 'Away'}</span>
               </div>
             </div>
 
             <div className="forza">
-              <span className="flbl">Opponent</span>
-              <div className="bars">
+              <span className="flbl">Your OVR</span>
+              <span style={{ fontFamily: 'var(--font-num)', fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{nextMatch.yourStrength}</span>
+              <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--muted)' }}>vs {nextMatch.opponentStrength}</span>
+              <div className="bars" style={{ marginLeft: 'auto' }}>
                 {[1, 2, 3, 4, 5].map(n => <i key={n} className={n <= forza ? 'f' : ''} />)}
               </div>
-              <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--muted)' }}>{nextMatch.opponentStrength}</span>
             </div>
 
             <div className="prob">

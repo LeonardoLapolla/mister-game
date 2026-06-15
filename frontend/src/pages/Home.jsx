@@ -44,6 +44,13 @@ export default function Home() {
           >
             START NOW ▶
           </button>
+          <button
+            className="btn ghost anim-up"
+            style={{ '--d': '.5s', fontSize: 13 }}
+            onClick={() => navigate('/guide')}
+          >
+            HOW TO PLAY
+          </button>
           <div className="meta">
             <span>5 leagues</span>
             <span>·</span>

@@ -173,6 +173,14 @@ function SpinWheel({ items, onResult, resetKey }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+      {spinning && (
+        <div
+          onClick={skipSpin}
+          style={{ position: 'fixed', inset: 0, zIndex: 100, cursor: 'pointer', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 96 }}
+        >
+          <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'rgba(255,255,255,.4)', letterSpacing: '.14em', textTransform: 'uppercase' }}>tap anywhere to skip</span>
+        </div>
+      )}
       <div style={{ position: 'relative' }}>
         <div style={{
           position: 'absolute', top: '50%', right: -14, transform: 'translateY(-50%)', zIndex: 10,
@@ -372,7 +380,7 @@ export default function EndSeason() {
       } else if (signingStep === 'player') {
         setNewPlayer(item)
         const incomingNames = new Set(completedSignings.map(s => s.in.name))
-        setWheelItems(myPlayers.filter(p => p.position === item.position && !incomingNames.has(p.name)).map(p => ({ ...p, label: p.name })))
+        setWheelItems(myPlayers.filter(p => p.position === item.position && !incomingNames.has(p.name)).map(p => ({ ...p, label: p.isBench ? `${p.name} (B)` : p.name })))
         setPendingStep('replace'); return
       } else if (signingStep === 'replace') {
         setPlayerToReplace(item); setPendingTransfer({ in: newPlayer, out: item })
@@ -400,9 +408,9 @@ export default function EndSeason() {
     setSaving(true)
     try {
       await fetch(`/api/market/${sessionId}/sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerName: pendingTransfer.out.name }) })
-      await fetch(`/api/market/${sessionId}/buy`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerName: pendingTransfer.in.name }) })
+      await fetch(`/api/market/${sessionId}/buy`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerName: pendingTransfer.in.name, isBench: pendingTransfer.out.isBench || false }) })
       setCompletedSignings(prev => [...prev, { in: pendingTransfer.in, out: pendingTransfer.out }])
-      setMyPlayers(prev => prev.filter(p => p.name !== pendingTransfer.out.name).concat({ ...pendingTransfer.in }))
+      setMyPlayers(prev => prev.filter(p => p.name !== pendingTransfer.out.name).concat({ ...pendingTransfer.in, isBench: pendingTransfer.out.isBench || false }))
       setPendingTransfer(null); skipToNextSigning()
     } catch (err) { console.error(err) } finally { setSaving(false) }
   }
@@ -573,7 +581,7 @@ export default function EndSeason() {
             <button
               className="euro-ticket"
               style={{ width: 'calc(100% - 0px)', margin: 0 }}
-              onClick={() => navigate(`/europa-group/${sessionId}`)}
+              onClick={() => navigate(`/squad/${sessionId}?mode=europa`)}
             >
               <div>
                 <span className="euro-badge">

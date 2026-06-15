@@ -2,56 +2,42 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import useGameStore from '../store/gameStore'
 
-const POSITION_COLORS = {
-  GK: { bg: 'bg-yellow-500', text: 'text-yellow-900', border: 'border-yellow-400' },
-  DEF: { bg: 'bg-blue-500', text: 'text-blue-900', border: 'border-blue-400' },
-  MID: { bg: 'bg-green-500', text: 'text-green-900', border: 'border-green-400' },
-  ATT: { bg: 'bg-red-500', text: 'text-red-900', border: 'border-red-400' },
-}
-
 const FORMATION_LAYOUT = {
-  '4-3-3': [
-    { pos: 'ATT', count: 3 },
-    { pos: 'MID', count: 3 },
-    { pos: 'DEF', count: 4 },
-    { pos: 'GK', count: 1 },
-  ],
-  '4-4-2': [
-    { pos: 'ATT', count: 2 },
-    { pos: 'MID', count: 4 },
-    { pos: 'DEF', count: 4 },
-    { pos: 'GK', count: 1 },
-  ],
-  '3-5-2': [
-    { pos: 'ATT', count: 2 },
-    { pos: 'MID', count: 5 },
-    { pos: 'DEF', count: 3 },
-    { pos: 'GK', count: 1 },
-  ],
-  '5-3-2': [
-    { pos: 'ATT', count: 2 },
-    { pos: 'MID', count: 3 },
-    { pos: 'DEF', count: 5 },
-    { pos: 'GK', count: 1 },
-  ],
-  '4-2-3-1': [
-    { pos: 'ATT', count: 1 },
-    { pos: 'MID', count: 5 },
-    { pos: 'DEF', count: 4 },
-    { pos: 'GK', count: 1 },
-  ],
+  '4-3-3':   [{ pos: 'ATT', count: 3 }, { pos: 'MID', count: 3 }, { pos: 'DEF', count: 4 }, { pos: 'GK', count: 1 }],
+  '4-4-2':   [{ pos: 'ATT', count: 2 }, { pos: 'MID', count: 4 }, { pos: 'DEF', count: 4 }, { pos: 'GK', count: 1 }],
+  '3-5-2':   [{ pos: 'ATT', count: 2 }, { pos: 'MID', count: 5 }, { pos: 'DEF', count: 3 }, { pos: 'GK', count: 1 }],
+  '5-3-2':   [{ pos: 'ATT', count: 2 }, { pos: 'MID', count: 3 }, { pos: 'DEF', count: 5 }, { pos: 'GK', count: 1 }],
+  '4-2-3-1': [{ pos: 'ATT', count: 1 }, { pos: 'MID', count: 5 }, { pos: 'DEF', count: 4 }, { pos: 'GK', count: 1 }],
 }
 
-function PlayerDot({ player }) {
-  const colors = POSITION_COLORS[player.position]
+const FORMATION_ATTITUDE = {
+  '4-3-3': 'Offensive', '3-5-2': 'Offensive',
+  '4-4-2': 'Balanced',  '4-2-3-1': 'Balanced',
+  '5-3-2': 'Defensive',
+}
+const ATTITUDE_COLOR = { Offensive: 'var(--loss)', Balanced: 'var(--mkt-amber)', Defensive: 'var(--win)' }
+
+function pitchPositions(layout, playersByPosition) {
+  const positions = []
+  const rows = layout.length
+  layout.forEach((row, rowIdx) => {
+    const yPct = 12 + (rowIdx / (rows - 1)) * 76
+    for (let i = 0; i < row.count; i++) {
+      const xPct = row.count === 1 ? 50 : 12 + (i / (row.count - 1)) * 76
+      positions.push({ xPct, yPct, player: playersByPosition[row.pos]?.[i], pos: row.pos })
+    }
+  })
+  return positions
+}
+
+function EnergyBar({ energy }) {
+  const color = energy >= 70 ? 'var(--primary)' : energy >= 40 ? 'var(--mkt-amber)' : 'var(--loss)'
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className={`w-12 h-12 rounded-full ${colors.bg} border-2 ${colors.border} flex items-center justify-center shadow-lg`}>
-        <span className={`text-xs font-black ${colors.text}`}>{player.rating}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div style={{ width: 36, height: 4, background: 'var(--line)', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ width: `${energy}%`, height: '100%', background: color, transition: 'width .3s' }} />
       </div>
-      <span className="text-white text-xs font-semibold text-center w-16 truncate leading-tight">
-        {player.name.split(' ').pop()}
-      </span>
+      <span style={{ fontFamily: 'var(--font-num)', fontSize: 10, color: 'var(--muted)', minWidth: 26 }}>{energy}%</span>
     </div>
   )
 }
@@ -60,28 +46,67 @@ export default function Squad() {
   const { sessionId } = useParams()
   const [searchParams] = useSearchParams()
   const isAutoMode = searchParams.get('mode') === 'auto'
+  const isEuropaMode = searchParams.get('mode') === 'europa'
   const navigate = useNavigate()
   const { session, setSession } = useGameStore()
+
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [simulating, setSimulating] = useState(false)
   const [error, setError] = useState(null)
+  const [swapping, setSwapping] = useState(false)
+  const [selectedBench, setSelectedBench] = useState(null)
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`/api/game/${sessionId}`)
-        const data = await res.json()
-        setSession(data.session)
-        setPlayers(data.session.players || [])
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
+    const init = async () => {
+      if (isEuropaMode) {
+        await fetch(`/api/game/${sessionId}/reset-energy`, { method: 'PATCH' })
       }
+      const res = await fetch(`/api/game/${sessionId}`)
+      const d = await res.json()
+      setSession(d.session)
+      setPlayers(d.session.players || [])
+      setLoading(false)
     }
-    fetchData()
+    init().catch(e => { console.error(e); setLoading(false) })
   }, [sessionId])
+
+  const handleSwap = async (benchPlayer, starterPlayer) => {
+    if (swapping) return
+    setSwapping(true)
+    setSelectedBench(null)
+    try {
+      const res = await fetch(`/api/game/${sessionId}/bench`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          updates: [
+            { playerId: starterPlayer.id, isBench: true },
+            { playerId: benchPlayer.id, isBench: false },
+          ],
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setPlayers(data.session.players || [])
+        setSession(data.session)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSwapping(false)
+    }
+  }
+
+  const handleBenchTap = (p) => {
+    if (swapping) return
+    setSelectedBench(sel => sel?.id === p.id ? null : p)
+  }
+
+  const handleStarterTap = (p) => {
+    if (!selectedBench || selectedBench.position !== p.position || swapping) return
+    handleSwap(selectedBench, p)
+  }
 
   const handleStart = async () => {
     if (isAutoMode) {
@@ -98,111 +123,181 @@ export default function Squad() {
       }
       setSimulating(false)
     }
-    navigate(`/season/${sessionId}`)
+    if (isEuropaMode) {
+      navigate(`/europa-group/${sessionId}`)
+    } else {
+      navigate(`/season/${sessionId}`)
+    }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-gray-400 text-xl">Caricamento...</div>
-      </div>
-    )
-  }
+  if (loading) return <div className="mister-loading"><div>Loading...</div></div>
 
   const formation = session?.formation || '4-3-3'
   const layout = FORMATION_LAYOUT[formation] || FORMATION_LAYOUT['4-3-3']
-  const avgRating = players.length > 0
-    ? Math.round(players.reduce((s, p) => s + p.rating, 0) / players.length)
-    : 0
+  const starters = players.filter(p => !p.isBench)
+  const bench = players.filter(p => p.isBench)
 
-  const playersByPosition = {}
+  const avgRating = starters.length > 0
+    ? Math.round(starters.reduce((s, p) => s + p.rating, 0) / starters.length)
+    : 0
+  const avgEnergy = starters.length > 0
+    ? Math.round(starters.reduce((s, p) => s + p.energy, 0) / starters.length)
+    : 100
+
+  const startersByPos = {}
   for (const pos of ['GK', 'DEF', 'MID', 'ATT']) {
-    playersByPosition[pos] = players.filter(p => p.position === pos)
+    startersByPos[pos] = starters.filter(p => p.position === pos)
+  }
+
+  const pitchPos = pitchPositions(layout, startersByPos)
+
+  const attitude = FORMATION_ATTITUDE[formation] || 'Balanced'
+  const attColor = ATTITUDE_COLOR[attitude]
+  const energyColor = avgEnergy >= 70 ? 'var(--primary)' : avgEnergy >= 40 ? 'var(--mkt-amber)' : 'var(--loss)'
+
+  const getButtonLabel = () => {
+    if (simulating) return 'Simulazione...'
+    if (isEuropaMode) return 'START EUROPEAN CUP ▶'
+    if (isAutoMode) return 'SIMULA IL RITORNO ▶'
+    return 'INIZIA LA STAGIONE ▶'
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-8">
-      <div className="max-w-lg mx-auto">
+    <div className="mister-page">
+      <div className="gtop">
+        <div className="gteam">
+          <div className="gcrest">{(session?.nickname || 'M')[0]}</div>
+          <div>
+            <b>{session?.nickname}</b>
+            <small>{session?.league} · {formation} · OVR {avgRating}</small>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            fontFamily: 'var(--font-num)', fontSize: 10, padding: '2px 8px',
+            borderRadius: 4, border: `1px solid ${attColor}`,
+            background: `color-mix(in oklab,${attColor} 12%,transparent)`,
+            color: attColor,
+          }}>{attitude.toUpperCase()}</span>
+          <span style={{ fontFamily: 'var(--font-num)', fontSize: 10, color: energyColor }}>⚡{avgEnergy}%</span>
+        </div>
+      </div>
 
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-black text-white">{session?.nickname}</h1>
-          <p className="text-gray-500 mt-1">
-            {session?.league} · {formation} · Overall medio{' '}
-            <span className="text-green-400 font-bold">{avgRating}</span>
-          </p>
-          {isAutoMode && (
-            <p className="text-yellow-400 text-sm mt-2">⚡ Modalità simulazione — il ritorno verrà simulato automaticamente</p>
+      <div className="page-scroll">
+
+        {isEuropaMode && (
+          <div style={{ margin: '14px 22px 0', padding: '10px 14px', background: 'color-mix(in oklab,var(--champions) 12%,var(--surface))', border: '1px solid color-mix(in oklab,var(--champions) 35%,transparent)', borderRadius: 'var(--r-sm)', color: 'var(--champions)', fontFamily: 'var(--font-num)', fontSize: 12, letterSpacing: '.08em' }}>
+            All players are at full energy for European competition — set your lineup and kick off.
+          </div>
+        )}
+
+        {/* Pitch */}
+        <div className="pitch">
+          <svg className="plines" viewBox="0 0 100 133" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
+            <g fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="0.5">
+              <rect x="3" y="3" width="94" height="127" />
+              <line x1="3" y1="66.5" x2="97" y2="66.5" />
+              <circle cx="50" cy="66.5" r="11" />
+              <rect x="28" y="3" width="44" height="20" />
+              <rect x="28" y="110" width="44" height="20" />
+            </g>
+          </svg>
+          {pitchPos.map(({ xPct, yPct, player }, i) => (
+            <div key={i} className="ppos" style={{ left: `${xPct}%`, top: `${yPct}%` }}>
+              <div className="pjersey">{player?.rating ?? '?'}</div>
+              <small>{player?.name?.split(' ').pop() ?? '—'}</small>
+            </div>
+          ))}
+        </div>
+
+        {/* Selection banner */}
+        {selectedBench && (
+          <div style={{ margin: '10px 22px 0', padding: '8px 12px', background: 'color-mix(in oklab,var(--primary) 12%,transparent)', border: '1px solid var(--primary)', borderRadius: 'var(--r-sm)', fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--primary)' }}>
+            {selectedBench.name} selected — tap a {selectedBench.position} starter to swap in
+          </div>
+        )}
+
+        {/* Starters */}
+        <div className="section-title">Starting 11</div>
+        <div className="roster" style={{ padding: '0 22px' }}>
+          {['GK', 'DEF', 'MID', 'ATT'].map(pos =>
+            startersByPos[pos]?.map(p => {
+              const isTarget = selectedBench?.position === p.position
+              return (
+                <div
+                  key={p.id}
+                  className="rrow"
+                  onClick={() => handleStarterTap(p)}
+                  style={{
+                    cursor: isTarget ? 'pointer' : 'default',
+                    outline: isTarget ? '1px dashed color-mix(in oklab,var(--primary) 50%,transparent)' : 'none',
+                    borderRadius: isTarget ? 'var(--r-sm)' : 0,
+                    background: isTarget ? 'color-mix(in oklab,var(--primary) 5%,transparent)' : undefined,
+                  }}
+                >
+                  <span className="rrole">{p.position}</span>
+                  <span className="rnm">{p.name}</span>
+                  <EnergyBar energy={p.energy} />
+                  <span className="rovr">{p.rating}</span>
+                </div>
+              )
+            })
           )}
         </div>
 
-        <div
-          className="relative rounded-2xl overflow-hidden mb-6"
-          style={{
-            background: 'linear-gradient(180deg, #166534 0%, #15803d 25%, #16a34a 50%, #15803d 75%, #166534 100%)',
-            minHeight: '480px',
-          }}
-        >
-          <div className="absolute inset-0 flex flex-col justify-between py-4 px-2 pointer-events-none">
-            <div className="border-b border-white/20 w-1/2 mx-auto" />
-            <div className="border border-white/20 w-1/3 mx-auto h-16 rounded-b-lg" />
-          </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border border-white/20 pointer-events-none" />
-          <div className="absolute top-1/2 left-0 right-0 border-t border-white/20 pointer-events-none" />
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 border border-white/20 w-1/3 h-16 rounded-t-lg pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col justify-around h-full py-6 px-2" style={{ minHeight: '480px' }}>
-            {layout.map((row, rowIdx) => (
-              <div key={rowIdx} className="flex justify-around items-center">
-                {playersByPosition[row.pos]?.slice(0, row.count).map((player, i) => (
-                  <PlayerDot key={i} player={player} />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 mb-6">
-          <div className="grid grid-cols-2 gap-2">
-            {['GK', 'DEF', 'MID', 'ATT'].map(pos => (
-              playersByPosition[pos]?.map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                    pos === 'GK' ? 'bg-yellow-500/20 text-yellow-400' :
-                    pos === 'DEF' ? 'bg-blue-500/20 text-blue-400' :
-                    pos === 'MID' ? 'bg-green-500/20 text-green-400' :
-                    'bg-red-500/20 text-red-400'
-                  }`}>{pos}</span>
-                  <span className="text-white text-sm truncate">{p.name}</span>
-                  <span className="text-gray-500 text-xs ml-auto">{p.rating}</span>
-                </div>
-              ))
-            ))}
-          </div>
-        </div>
-
-        <div className="roster" style={{ padding: '12px 22px 0' }}>
-          {['GK', 'DEF', 'MID', 'ATT'].map(pos => players.filter(p => p.position === pos).map((p, i) => (
-            <div key={`${pos}-${i}`} className="rrow">
-              <span className="rrole">{pos}</span>
-              <span className="rnm">{p.name}</span>
-              {p.team && <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--muted)', marginRight: 'auto' }}>{p.team}</span>}
-              <span className="rovr">{p.rating}</span>
+        {/* Bench */}
+        {bench.length > 0 && (
+          <>
+            <div className="section-title">
+              Bench
+              {!selectedBench && <span style={{ fontFamily: 'var(--font-num)', fontSize: 10, color: 'var(--muted)', fontWeight: 400, marginLeft: 8 }}>tap to select, then tap a starter</span>}
             </div>
-          )))}
-        </div>
+            <div className="roster" style={{ padding: '0 22px' }}>
+              {bench.map(p => {
+                const isSelected = selectedBench?.id === p.id
+                const hasStarter = startersByPos[p.position]?.length > 0
+                return (
+                  <div
+                    key={p.id}
+                    className="rrow"
+                    onClick={() => hasStarter ? handleBenchTap(p) : undefined}
+                    style={{
+                      cursor: hasStarter ? 'pointer' : 'default',
+                      background: isSelected ? 'color-mix(in oklab,var(--primary) 12%,transparent)' : undefined,
+                      outline: isSelected ? '1px solid var(--primary)' : 'none',
+                      borderRadius: 'var(--r-sm)',
+                      opacity: hasStarter ? 1 : 0.45,
+                    }}
+                  >
+                    <span className="rrole">{p.position}</span>
+                    <span className="rnm">{p.name}</span>
+                    <EnergyBar energy={p.energy} />
+                    <span className="rovr">{p.rating}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
 
         {error && (
-          <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          <div style={{ margin: '12px 22px 0', padding: '10px 14px', background: 'color-mix(in oklab,var(--loss) 14%,var(--surface))', border: '1px solid color-mix(in oklab,var(--loss) 40%,transparent)', borderRadius: 'var(--r-sm)', color: 'var(--loss)', fontSize: 13 }}>
             {error}
           </div>
         )}
 
-        <button
-          onClick={handleStart}
-          disabled={simulating}
-          className="w-full bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black text-xl py-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
-        >
-          {simulating ? 'Simulazione ritorno...' : isAutoMode ? 'SIMULA IL RITORNO →' : 'INIZIA LA STAGIONE →'}
+        {isAutoMode && (
+          <div style={{ margin: '12px 22px 0', padding: '10px 14px', background: 'color-mix(in oklab,var(--mkt-amber) 10%,var(--surface))', border: '1px solid color-mix(in oklab,var(--mkt-amber) 25%,transparent)', borderRadius: 'var(--r-sm)', color: 'var(--mkt-amber)', fontSize: 13 }}>
+            Auto mode — il ritorno verrà simulato automaticamente
+          </div>
+        )}
+
+        <div style={{ height: 100 }} />
+      </div>
+
+      <div className="screen-foot">
+        <button onClick={handleStart} disabled={simulating} className="btn primary">
+          {getButtonLabel()}
         </button>
       </div>
     </div>

@@ -47,7 +47,7 @@ const available = leaguePlayers
 // Acquista un giocatore
 router.post("/:sessionId/buy", async (req, res) => {
   try {
-    const { playerName } = req.body;
+    const { playerName, isBench } = req.body;
 
     const session = await prisma.session.findUnique({
       where: { id: req.params.sessionId },
@@ -69,28 +69,33 @@ router.post("/:sessionId/buy", async (req, res) => {
       return res.status(404).json({ error: "Giocatore non trovato" });
     }
 
-    /*const budgetRimasto = session.budget - session.budgetSpent;
-    if (player.cost > budgetRimasto) {
-      return res.status(400).json({ error: "Budget insufficiente" });
-    }*/
-
     // Controlla se il giocatore è già stato acquistato
     const giaAcquistato = session.players.find((p) => p.name === playerName);
     if (giaAcquistato) {
       return res.status(400).json({ error: "Giocatore già acquistato" });
     }
 
-    // Controlla i slot disponibili per la posizione
-    const formation = formations.find((f) => f.id === session.formation);
-    const slotsPerPosition = formation.slots;
-    const giocatoriPerPosizione = session.players.filter(
-      (p) => p.position === player.position
-    ).length;
+    if (isBench) {
+      // Slot panchina per posizione: 1 GK, 2 DEF, 2 MID, 2 ATT
+      const BENCH_SLOTS = { GK: 1, DEF: 2, MID: 2, ATT: 2 };
+      const benchForPos = session.players.filter(p => p.isBench && p.position === player.position).length;
+      const maxBench = BENCH_SLOTS[player.position] ?? 1;
+      if (benchForPos >= maxBench) {
+        return res.status(400).json({ error: `Slot riserva ${player.position} pieni` });
+      }
+    } else {
+      // Controlla i slot titolari per la posizione
+      const formation = formations.find((f) => f.id === session.formation);
+      const slotsPerPosition = formation.slots;
+      const giocatoriPerPosizione = session.players.filter(
+        (p) => p.position === player.position && !p.isBench
+      ).length;
 
-    if (giocatoriPerPosizione >= slotsPerPosition[player.position]) {
-      return res.status(400).json({
-        error: `Slot per ${player.position} già pieni`,
-      });
+      if (giocatoriPerPosizione >= slotsPerPosition[player.position]) {
+        return res.status(400).json({
+          error: `Slot per ${player.position} già pieni`,
+        });
+      }
     }
 
     // Acquista il giocatore
@@ -100,6 +105,8 @@ router.post("/:sessionId/buy", async (req, res) => {
         position: player.position,
         rating: player.rating,
         cost: player.cost,
+        isBench: isBench || false,
+        energy: 100,
         sessionId: session.id,
       },
     });
@@ -159,5 +166,58 @@ router.post("/:sessionId/sell", async (req, res) => {
   }
 });
 
+
+// Acquisto iniziale in batch dalla ruota — 1 sola chiamata invece di N
+router.post("/:sessionId/buy-batch", async (req, res) => {
+  try {
+    const { players: toBuy } = req.body;
+    if (!Array.isArray(toBuy) || toBuy.length === 0) {
+      return res.status(400).json({ error: "Payload non valido" });
+    }
+
+    const session = await prisma.session.findUnique({
+      where: { id: req.params.sessionId },
+      include: { players: true },
+    });
+    if (!session) return res.status(404).json({ error: "Sessione non trovata" });
+
+    const existingNames = new Set(session.players.map(p => p.name));
+    const toCreate = [];
+    let totalCost = 0;
+
+    for (const { playerName, isBench } of toBuy) {
+      if (existingNames.has(playerName)) continue;
+      let player = null;
+      for (const league of Object.values(playersData)) {
+        player = league.find(p => p.name === playerName);
+        if (player) break;
+      }
+      if (!player) continue;
+      toCreate.push({
+        name: player.name,
+        position: player.position,
+        rating: player.rating,
+        cost: player.cost,
+        isBench: isBench || false,
+        energy: 100,
+        sessionId: session.id,
+      });
+      totalCost += player.cost;
+    }
+
+    if (toCreate.length > 0) {
+      await prisma.player.createMany({ data: toCreate });
+      await prisma.session.update({
+        where: { id: session.id },
+        data: { budgetSpent: session.budgetSpent + totalCost },
+      });
+    }
+
+    res.json({ created: toCreate.length });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Errore nel salvataggio della rosa" });
+  }
+});
 
 module.exports = router;

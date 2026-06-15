@@ -151,9 +151,21 @@ router.get("/:sessionId/next-match", async (req, res) => {
       return res.json({ halfTime: true, standings, playedCount, totalMatches });
     }
 
-    const yourStrength = session.players.length > 0
-      ? Math.round(session.players.reduce((s, p) => s + p.rating, 0) / session.players.length)
+    const FORMATION_ATTITUDE = {
+      '4-3-3': 'offensive', '3-5-2': 'offensive',
+      '4-4-2': 'balanced',  '4-2-3-1': 'balanced',
+      '5-3-2': 'defensive',
+    };
+    const attitude = FORMATION_ATTITUDE[session.formation] || 'balanced';
+
+    const starters = session.players.filter(p => !p.isBench);
+    const avgEnergy = starters.length > 0
+      ? starters.reduce((s, p) => s + p.energy, 0) / starters.length
+      : 100;
+    const baseStrength = starters.length > 0
+      ? starters.reduce((s, p) => s + p.rating, 0) / starters.length
       : 60;
+    const yourStrength = Math.round(baseStrength * (0.85 + 0.15 * avgEnergy / 100));
 
     const team = leagueTeams.find(t => t.name === nextMatch.opponent);
     const opponentStrength = nextMatch.homeGame
@@ -165,9 +177,17 @@ router.get("/:sessionId/next-match", async (req, res) => {
     const drawProb = Math.max(8, Math.round((0.22 - absDiff * 0.006) * 100));
     const remaining = 100 - drawProb;
     const winProb = Math.min(80, Math.max(8, Math.round(remaining * (0.5 + diff * 0.025))));
-    const lossProb = Math.max(8, 100 - drawProb - winProb);
 
-    const probs = { win: winProb, draw: drawProb, loss: lossProb };
+    const attitudeOffset = {
+      offensive: { win: 6, draw: -5, loss: -1 },
+      balanced:  { win: 0, draw:  0, loss:  0 },
+      defensive: { win: -4, draw: 7, loss: -3 },
+    }[attitude];
+
+    const finalWin  = Math.max(8, Math.min(80, winProb  + attitudeOffset.win));
+    const finalDraw = Math.max(8, Math.min(80, drawProb + attitudeOffset.draw));
+    const finalLoss = Math.max(8, 100 - finalWin - finalDraw);
+    const probs = { win: finalWin, draw: finalDraw, loss: finalLoss };
 
     res.json({
       finished: false,
@@ -178,6 +198,8 @@ router.get("/:sessionId/next-match", async (req, res) => {
       probs,
       playedCount,
       totalMatches,
+      avgEnergy: Math.round(avgEnergy),
+      formationAttitude: attitude,
     });
   } catch (error) {
     console.error(error);
@@ -218,6 +240,12 @@ router.post("/:sessionId/play-single", async (req, res) => {
       },
       data: { goalsFor, goalsAgainst, played: true },
     });
+
+    // Titolari −2/−4 random, panchina +15/+20 random
+    const starterDelta = -(Math.floor(Math.random() * 3) + 2);
+    const benchDelta = Math.floor(Math.random() * 6) + 15;
+    await prisma.$executeRaw`UPDATE "Player" SET energy = GREATEST(0, LEAST(100, energy + ${starterDelta})) WHERE "sessionId" = ${session.id} AND "isBench" = false`;
+    await prisma.$executeRaw`UPDATE "Player" SET energy = GREATEST(0, LEAST(100, energy + ${benchDelta})) WHERE "sessionId" = ${session.id} AND "isBench" = true`;
 
     res.json({ goalsFor, goalsAgainst, opponent });
   } catch (error) {
