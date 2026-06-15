@@ -95,6 +95,13 @@ function MatchWheel({ probs, onResult, locked, onLock }) {
     rafRef.current = requestAnimationFrame(animate)
   }
 
+  function skipSpin() {
+    if (!spinning) return
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    setSpinning(false)
+    onResult(getResult(angleRef.current))
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
       <div style={{ position: 'relative' }}>
@@ -107,7 +114,7 @@ function MatchWheel({ probs, onResult, locked, onLock }) {
         }} />
         <canvas ref={canvasRef} width={280} height={280}
           style={{ borderRadius: '50%', display: 'block', cursor: locked ? 'default' : 'pointer' }}
-          onClick={spin}
+          onClick={() => spinning ? skipSpin() : spin()}
         />
       </div>
       <button onClick={spin} disabled={spinning || locked}

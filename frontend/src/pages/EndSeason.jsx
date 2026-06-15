@@ -164,6 +164,13 @@ function SpinWheel({ items, onResult, resetKey }) {
     rafRef.current = requestAnimationFrame(animate)
   }
 
+  function skipSpin() {
+    if (!spinning) return
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    setSpinning(false)
+    onResult(getResult(angleRef.current))
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
       <div style={{ position: 'relative' }}>
@@ -176,7 +183,7 @@ function SpinWheel({ items, onResult, resetKey }) {
         }} />
         <canvas ref={canvasRef} width={280} height={280}
           style={{ borderRadius: '50%', display: 'block', cursor: locked ? 'default' : 'pointer' }}
-          onClick={spin}
+          onClick={() => spinning ? skipSpin() : spin()}
         />
       </div>
       <button onClick={spin} disabled={spinning || locked || items.length === 0}
@@ -328,12 +335,23 @@ export default function EndSeason() {
     { label: '3', value: 3, color: '#d97706' }, { label: '4', value: 4, color: '#FB5566' },
   ]
 
+  const getAvailableRoles = () => {
+    const allRoles = [
+      { label: 'GK', value: 'GK', color: '#F5B43C' },
+      { label: 'DEF', value: 'DEF', color: '#2E6BFF' },
+      { label: 'MID', value: 'MID', color: '#16C784' },
+      { label: 'FW', value: 'ATT', color: '#FB5566' },
+    ]
+    return allRoles.filter(role => {
+      const playersInRole = myPlayers.filter(p => p.position === role.value).length
+      const swapsInRole = completedSignings.filter(s => s.in.position === role.value).length
+      return playersInRole > swapsInRole
+    })
+  }
+
   const getSigningWheelItems = () => {
     if (signingStep === 'league') return LEAGUES.map(l => ({ ...l, label: l.name }))
-    if (signingStep === 'role') return [
-      { label: 'GK', value: 'GK', color: '#F5B43C' }, { label: 'DEF', value: 'DEF', color: '#2E6BFF' },
-      { label: 'MID', value: 'MID', color: '#16C784' }, { label: 'FW', value: 'ATT', color: '#FB5566' },
-    ]
+    if (signingStep === 'role') return getAvailableRoles()
     if (signingStep === 'player' || signingStep === 'replace') return wheelItems
     return []
   }
@@ -353,7 +371,8 @@ export default function EndSeason() {
         setWheelItems(available.map(p => ({ ...p, label: p.name }))); setPendingStep('player'); return
       } else if (signingStep === 'player') {
         setNewPlayer(item)
-        setWheelItems(myPlayers.filter(p => p.position === item.position).map(p => ({ ...p, label: p.name })))
+        const incomingNames = new Set(completedSignings.map(s => s.in.name))
+        setWheelItems(myPlayers.filter(p => p.position === item.position && !incomingNames.has(p.name)).map(p => ({ ...p, label: p.name })))
         setPendingStep('replace'); return
       } else if (signingStep === 'replace') {
         setPlayerToReplace(item); setPendingTransfer({ in: newPlayer, out: item })
@@ -483,6 +502,16 @@ export default function EndSeason() {
               </div>
             )
           })()}
+          <div className="roster" style={{ padding: '0 22px 12px' }}>
+            {['GK', 'DEF', 'MID', 'ATT'].map(pos => players.filter(p => p.position === pos).map((p, i) => (
+              <div key={`${pos}-${i}`} className="rrow">
+                <span className="rrole">{pos}</span>
+                <span className="rnm">{p.name}</span>
+                {p.team && <span style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--muted)', marginRight: 'auto' }}>{p.team}</span>}
+                <span className="rovr">{p.rating}</span>
+              </div>
+            )))}
+          </div>
           <div style={{ height: 100 }} />
         </div>
         <div className="screen-foot">
@@ -709,6 +738,19 @@ export default function EndSeason() {
   return (
     <div className="mister-page mkt fade-key">
       <DeadlineBar heading="Deadline Day · Summer" />
+      {budget && (
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, padding: '7px 14px', background: 'rgba(255,194,60,.07)', borderBottom: '1px solid color-mix(in oklab,var(--mkt-amber) 22%,transparent)' }}>
+          <span style={{ fontFamily: 'var(--font-num)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '.18em', color: 'var(--mkt-amber)', marginRight: 2 }}>Session</span>
+          {[
+            `💰 ${budget.label}`,
+            signingCount > 0 && `🔄 ${signingCount}`,
+            signingLeague && `${signingLeague.country} ${signingLeague.name}`,
+            signingRole && `📋 ${ROLE_LABELS[signingRole.value] || signingRole.label}`,
+          ].filter(Boolean).map((label, i) => (
+            <span key={i} style={{ fontFamily: 'var(--font-num)', fontSize: 11, color: 'var(--mkt-amber)', border: '1px solid color-mix(in oklab,var(--mkt-amber) 35%,transparent)', borderRadius: 4, padding: '1px 7px', background: 'rgba(255,194,60,.08)' }}>{label}</span>
+          ))}
+        </div>
+      )}
       <div className="page-scroll mkt-scroll" style={{ flex: 1 }}>
         <div className="mkt-lower3">
           <span className="mkt-l3-kick">{kick}</span>

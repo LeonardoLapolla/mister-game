@@ -37,6 +37,7 @@ function getZone(pos, league, total) {
 function SpinWheelBase({ items, onResult, locked, onLock, size = 280 }) {
   const canvasRef = useRef(null)
   const angleRef = useRef(0)
+  const rafRef = useRef(null)
   const [spinning, setSpinning] = useState(false)
 
   useEffect(() => { drawWheel(angleRef.current) }, [items])
@@ -121,10 +122,17 @@ function SpinWheelBase({ items, onResult, locked, onLock, size = 280 }) {
       const p = Math.min((now - t0) / dur, 1)
       angleRef.current = a0 + total * (1 - Math.pow(1 - p, 4))
       drawWheel(angleRef.current)
-      if (p < 1) requestAnimationFrame(animate)
+      if (p < 1) { rafRef.current = requestAnimationFrame(animate) }
       else { setSpinning(false); onResult(getResult(angleRef.current)) }
     }
-    requestAnimationFrame(animate)
+    rafRef.current = requestAnimationFrame(animate)
+  }
+
+  function skipSpin() {
+    if (!spinning) return
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    setSpinning(false)
+    onResult(getResult(angleRef.current))
   }
 
   return (
@@ -139,7 +147,7 @@ function SpinWheelBase({ items, onResult, locked, onLock, size = 280 }) {
         }} />
         <canvas ref={canvasRef} width={size} height={size}
           style={{ borderRadius: '50%', display: 'block', cursor: locked ? 'default' : 'pointer' }}
-          onClick={spin}
+          onClick={() => spinning ? skipSpin() : spin()}
         />
       </div>
       <button onClick={spin} disabled={spinning || locked || items.length === 0}
